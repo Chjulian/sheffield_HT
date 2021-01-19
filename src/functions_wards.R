@@ -97,9 +97,9 @@ ward_occupation <- function(wards.patients=wards.patients){
         
         #Join ward data
         wards <- rbind(wards, multiples.fixed); rm(pre.wards, multiples.fixed, wards.patients, wards.staff)         
-        wards <- wards.m <- wards[wards$id%in%mydata$barcode,]
-        
-        mydata <<- mydata; return(wards)
+        wards <- wards[wards$id%in%mydata$barcode,]
+        mydata <<- mydata;
+        return(wards)
 }
 
 summary.res <- function(res=res, burnin=1000, support=0){
@@ -139,7 +139,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
                 x<- contacts$from[i]
                 if(is.na(mydata.contacts$ward[mydata.contacts$barcode==x])){
                         if(x %in% wards$id){ 
-                                wards.i <- wards.m[wards.m$id==x,]
+                                wards.i <- wards[wards$id==x,]
                                 wards.i$intervals <- interval(wards.i$adm, wards.i$dis)
                                 if(nrow(wards.i)!=1){ 
                                         j.time <- interval(contacts$date[i],contacts$date[i])
@@ -153,7 +153,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
                                 contacts$ward.from[i] <- mydata.contacts$ward[mydata$barcode==x]
                         } else { #if so, try to figure out the ward using the occupation ward data and infection date
                                 if(x %in% wards$id){ 
-                                        wards.i <- wards.m[wards.m$id==x,]
+                                        wards.i <- wards[wards$id==x,]
                                         wards.i$intervals <- interval(wards.i$adm, wards.i$dis)
                                         if(nrow(wards.i)!=1){ 
                                                 j.time <- interval(contacts$date[i],contacts$date[i])
@@ -169,7 +169,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
                 x<- contacts$to[i]
                 if(is.na(mydata.contacts$ward[mydata.contacts$barcode==x])){
                         if(x %in% wards$id){ 
-                                wards.i <- wards.m[wards.m$id==x,]
+                                wards.i <- wards[wards$id==x,]
                                 wards.i$intervals <- interval(wards.i$adm, wards.i$dis)
                                 if(nrow(wards.i)!=1){ 
                                         j.time <- interval(contacts$date[i],contacts$date[i])
@@ -183,7 +183,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
                                 contacts$ward.to[i] <- mydata.contacts$ward[mydata$barcode==x]
                         } else { #if so, try to figure out the ward using the occupation ward data and infection date
                                 if(x %in% wards$id){ 
-                                        wards.i <- wards.m[wards.m$id==x,]
+                                        wards.i <- wards[wards$id==x,]
                                         wards.i$intervals <- interval(wards.i$adm, wards.i$dis)
                                         if(nrow(wards.i)!=1){ 
                                                 j.time <- interval(contacts$date[i],contacts$date[i])
@@ -227,7 +227,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
                 for(x in i){ #check if the individual is observed in multiple wards
                         if(is.na(mydata$ward[mydata$barcode==x])){
                                 if(x %in% wards$id){ #"shef_cba03"
-                                        wards.i <- wards.m[wards.m$id==x,]
+                                        wards.i <- wards[wards$id==x,]
                                         wards.i$intervals <- interval(wards.i$adm, wards.i$dis)
                                         if(nrow(wards.i)!=1){ #check from(s) and to(s)
                                                 for(myrow in 1:nrow(j)){
@@ -245,7 +245,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
                                         w <- c(w, mydata$ward[mydata$barcode==x])
                                 } else { #if so, try to figure out the ward using the occupation ward data and infection date
                                         if(x %in% wards$id){ #"shef_cba03"
-                                                wards.i <- wards.m[wards.m$id==x,]
+                                                wards.i <- wards[wards$id==x,]
                                                 wards.i$intervals <- interval(wards.i$adm, wards.i$dis)
                                                 if(nrow(wards.i)!=1){ #check from(s) and to(s)
                                                         for(myrow in 1:nrow(j)){
