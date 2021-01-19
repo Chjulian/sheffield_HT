@@ -156,4 +156,4 @@ tChains.df <- summary.res(res=res_maxdist_0, burnin=1000, support=0)
 #################################
 
 myRDS <- list('data'=data, 'config'=config , 'res'=res, 'df'=tChains.df)
-saveRDS(myRDS, file = paste("output/res_", "max_dist_", max_dist, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".rds", sep=""))
+saveRDS(myRDS, file = paste("output/res_", "max_dist_", max_dist, "_", format(Sys.time(), "%Y_%m_%d_%H_%M_%S"), ".rds", sep=""))
