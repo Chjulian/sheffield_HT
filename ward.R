@@ -150,5 +150,10 @@ res <- outbreaker(data, config)
 #################################
 
 tChains.df <- summary.res(res=res_maxdist_0, burnin=1000, support=0)
-write_csv(tChains.df, paste("output/df_", "max_dist_", max_distsrc, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".csv", sep=""))
-saveRDS(res, file = paste("output/res_", "max_dist_", max_dist, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".rds", sep=""))
+
+#################################
+#save data
+#################################
+
+myRDS <- list('data'=data, 'config'=config , 'res'=res, 'df'=tChains.df)
+saveRDS(myRDS, file = paste("output/res_", "max_dist_", max_dist, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".rds", sep=""))
