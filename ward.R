@@ -16,7 +16,7 @@ pacman::p_load(ape, linelist, epitrix, fitdistrplus,
                visNetwork, lubridate, pairsnp,
                ggplot2) #devtools::install_github("gtonkinhill/pairsnp-r")
 #https://github.com/reconhub/epicontacts to info on how to install epicontacts
-# source("src/functions.R")
+source("functions_maxdist.R")
 '%!in%' <- function(x, y)! ('%in%'(x, y))
 vector.is.empty <- function(x) return(length(x) ==0 )
 
