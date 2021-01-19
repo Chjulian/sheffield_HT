@@ -1,3 +1,4 @@
+##Written by Finlay
 ## Identify a starting tree with the fewest number of 'imports' as given by the
 ## timed contact data
 get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 0) {
