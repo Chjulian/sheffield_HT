@@ -1,0 +1,7 @@
+242, SHEF-CC71A, insertion of N
+3103, SHEF-CA002, insertion of A 
+23828, SHEF-CF049, insertion of A 
+26082-26084, SHEF-C9DB1 insertion of CTT
+27280-27288, SHEF-C776A insertion of 9 Ns
+27594-27601, SHEF-D0555 insertion of 8 Ns
+29927-29955, SHEF-C7F35 insertion of 29 Ns at 3 prime end

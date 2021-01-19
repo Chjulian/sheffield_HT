@@ -15,9 +15,11 @@ pacman::p_load(ape, linelist, epitrix, fitdistrplus,
                magrittr, remotes, epicontacts, 
                visNetwork, lubridate, pairsnp,
                ggplot2) 
-source("functions_wards.R")
-source("functions_maxdist.R")
-source("onset_distribution.R")
+source("src/functions_wards.R")
+source("src/functions_maxdist.R")
+source("src/onset_distribution.R")
+
+max_dist <- 0
 
 
 #################################
@@ -35,12 +37,12 @@ mydata <- mydata[!is.na(mydata$dateofonset_foranalysis),]
 #load dna data in DNAbin format, 
 #################################
 #one sequence per individual
-dna <- read.FASTA("data/hoci_phylo-2020-09-03.aln")
+dna <- read.FASTA("data/hoci_phylo-2020-09-03_error-removed_masked.aln")
 mylabels <- clean_data(as.data.frame(names(dna)))
 names(dna) <- mylabels$names_dna
 dna <- dna[mydata$barcode]; mylabels <- names(dna)
-write.FASTA(dna, "data/hoci_phylo-2020-09-03.ord.aln")
-dna.SNP <- import_fasta_sparse("data/hoci_phylo-2020-09-03.ord.aln") %>% snp_dist(.)
+write.FASTA(dna, "data/hoci_phylo-2020-09-03_error-removed_masked.ord.aln")
+dna.SNP <- import_fasta_sparse("data/hoci_phylo-2020-09-03_error-removed_masked.ord.aln") %>% snp_dist(.)
 rownames(dna.SNP) <- colnames(dna.SNP) <- mylabels; rm(mylabels)
 
 #################################
@@ -135,18 +137,18 @@ config <- create_config(
 #################################
 ## Identify initial tree (run this for now, it will identify a possible starting point)
 #from time to time it fails but usually work after first try
-config <- get_initial_tree(data, config, n_iter = 5e3, max_dist = 0)
+config <- get_initial_tree(data, config, n_iter = 5e3, max_dist = max_dist)
 table(data$D[cbind(seq_along(config$init_alpha), config$init_alpha)],useNA = 'always')
 
 #################################
 #run outbreaker
 #################################
 res <- outbreaker(data, config)
-plot(res, burn=0)
 
 #################################
 #summaries
 #################################
 
 tChains.df <- summary.res(res=res_maxdist_0, burnin=1000, support=0)
-write_csv(tChains.df, paste("outbreaker2_summaryRun_", format(Sys.time(), "%Y_%m_%d_%H_%M_%S"), ".csv", sep=""))
+write_csv(tChains.df, paste("output/df_", "max_dist_", max_distsrc, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".csv", sep=""))
+saveRDS(res, file = paste("output/res_", "max_dist_", max_dist, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".rds", sep=""))

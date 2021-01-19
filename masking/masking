@@ -1,0 +1,3 @@
+python deleteColumns.py hoci_phylo-2020-09-03.aln alignment-errors.txt > hoci_phylo-2020-09-03_error-removed.aln
+cat MN908947.fasta hoci_phylo-2020-09-03_error-removed.aln > hoci_phylo-2020-09-03_error-removed.aln
+python mask_alignment_using_vcf.py -i hoci_phylo-2020-09-03_error-removed.aln -o hoci_phylo-2020-09-03_error-removed_masked.aln -v problematic_sites_sarsCov2.vcf
