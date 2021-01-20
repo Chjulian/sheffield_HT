@@ -286,5 +286,8 @@ summary.res <- function(res=res, burnin=1000, support=0){
                 ); rm(i,contacts.cat, j)
                 tChains.df <- rbind(tChains.df, tChains.line); rm(tChains.line)
         }; tChains.df$aveSNPpair <- round (tChains.df$aveSNPpair,2)
+        mydf <<- mydf
+        cons_tree <<- cons_tree
+        myclusters <<- myclusters
         return(tChains.df)
 }
