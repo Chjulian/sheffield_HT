@@ -19,8 +19,7 @@ source("src/functions_wards.R")
 source("src/functions_maxdist.R")
 source("src/onset_distribution.R")
 
-max_dist <- 0
-
+max_dist <- 1
 
 #################################
 #load linelist data
@@ -138,7 +137,7 @@ config <- create_config(
 ## Identify initial tree (run this for now, it will identify a possible starting point)
 #from time to time it fails but usually work after first try
 config <- get_initial_tree(data, config, n_iter = 5e3, max_dist = max_dist)
-table(data$D[cbind(seq_along(config$init_alpha), config$init_alpha)],useNA = 'always')
+# table(data$D[cbind(seq_along(config$init_alpha), config$init_alpha)],useNA = 'always')
 
 #################################
 #run outbreaker
@@ -149,7 +148,7 @@ res <- outbreaker(data, config)
 #summaries
 #################################
 
-tChains.df <- summary.res(res=res_maxdist_0, burnin=1000, support=0)
+tChains.df <- summary.res(res=res, burnin=1000, support=0)
 
 #################################
 #save data
