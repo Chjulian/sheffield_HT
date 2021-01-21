@@ -109,7 +109,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
         mydf$tree$from <- as.vector(dictionary.tree[mydf$tree$from])
         mydf$tree$to <- as.vector(dictionary.tree[mydf$tree$to])
         tree <- mydf$tree
-        table(data$D[as.matrix(tree[c("from", "to")])], useNA = 'always')
+        # table(data$D[as.matrix(tree[c("from", "to")])], useNA = 'always')
         min.date.i<- which(tree$time==min(tree$time))
         if(length(min.date.i)>1) min.date.i<- min.date.i[1]
         min.date <- mydata$dateofonset_foranalysis[mydata$barcode== tree$to[min.date.i]]
@@ -118,7 +118,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
         tree$date <- tree$time+min.date;rm(min.date,min.date.i)
         
         #filtering
-        tree<-tree[complete.cases(tree), ]
+        tree <- tree[!is.na(tree$from),]
         tree <- tree[tree$support>support,]
         for(i in 1:nrow(tree)){
                 if(any(is.na(c(tree$from[i], tree$to[i])))){
