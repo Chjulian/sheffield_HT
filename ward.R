@@ -19,13 +19,14 @@ source("src/functions_wards.R")
 source("src/functions_maxdist.R")
 source("src/onset_distribution.R")
 
-max_dist <- 1
+max_dist <- 0
 
 #################################
 #load linelist data
 #################################
 # load data, clean dates and filter-out observations
-mydata <- read.csv("data/hoci-phylo-metadata-onset-2020-09-16.V1.2.121120.csv")
+mydata <- read.csv("data/hoci-phylo-metadata-onset-2020-09-16.V1.2.121120.csv",
+                   stringsAsFactors =F)
 mydata <- onsetdistribution(mydata)
 mydata<- clean_data(mydata, guess_dates = which(names(mydata)=='DateOfOnset_forAnalysis'))
 mydata <- mydata[mydata$category%in%c('inpatient', 'outpatient','staff'),]
@@ -154,7 +155,8 @@ tChains.df <- summary.res(res=res, burnin=1000, support=0)
 #save data
 #################################
 
-myRDS <- list('data'=data, 'config'=config , 'res'=res, 
+myRDS <- list('raw'=mydata, 'wards'=wards,
+              'data'=data, 'config'=config , 'res'=res, 
               'res.sum'= mydf,
               'cons_tree'=cons_tree,
               'clusters'=myclusters,
