@@ -38,7 +38,7 @@ d.onset.sensitivity <- data.frame(
         "index.category.inpatient"=numeric(),
         "index.category.staff"=numeric())
 
-for(n.run in 1:nruns){
+for(n.run in 1:n.runs){
         #################################
         #load linelist data
         #################################
@@ -138,7 +138,7 @@ for(n.run in 1:nruns){
         ## set up outbreaker config file
         config <- create_config(
                 ## define iterations and sampling (this is a short exploratory run)
-                n_iter = 5e3, sample_every = 50,
+                n_iter = 1e4, sample_every = 50,
                 ## prior on the reporting probability pi
                 move_pi = TRUE, prior_pi = c(5, 5),
                 ## eps is the probability of infections occuring between cases registered on the same ward
@@ -155,7 +155,7 @@ for(n.run in 1:nruns){
         #################################
         ## Identify initial tree (run this for now, it will identify a possible starting point)
         #from time to time it fails but usually work after first try
-        config <- get_initial_tree(data, config, n_iter = 5e3, max_dist = max_dist)
+        config <- get_initial_tree(data, config, n_iter = 1e4, max_dist = max_dist)
         # table(data$D[cbind(seq_along(config$init_alpha), config$init_alpha)],useNA = 'always')
         
         #################################
