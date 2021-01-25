@@ -1,4 +1,4 @@
-d<- d2
+d<- d0
 
 #visualization of consensus tree
 cons_tree <- vis_epicontacts(d$cons_tree,
@@ -76,6 +76,12 @@ print(p9)
 dev.off()
 
 
-
-
+#links per staff
+staff <-mydata$barcode[mydata$category=="staff"]
+staff.tree <- d$res.sum$tree[d$res.sum$tree$from%in%staff,]
+length(unique(staff.tree$from))
+sort(table(staff.tree$from), decreasing = T)
+summary(as.vector(table(staff.tree$from)))
+#wards
+sort(table(c(d$cons_tree$contacts$ward.to, d$cons_tree$contacts$ward.from)), decreasing = T)
 
