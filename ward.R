@@ -121,10 +121,12 @@ rm(transition)
 config <- create_config(
         ## define iterations and sampling (this is a short exploratory run)
         n_iter = 5e3, sample_every = 50,
+        ## prior on the rate
+        move_mu = TRUE, prior_mu =4.63e-06,
         ## prior on the reporting probability pi
-        move_pi = TRUE, prior_pi = c(5, 5),
+        move_pi = TRUE, prior_pi = c(30, 10),
         ## eps is the probability of infections occuring between cases registered on the same ward
-        move_eps = TRUE, prior_eps = c(1, 1),
+        move_eps = TRUE, prior_eps = c(50, 1),
         ## tau is the probability of an unobserved cases being moved to a different ward
         move_tau = TRUE, prior_tau = c(1, 1),
         ## leave these options as is for now
