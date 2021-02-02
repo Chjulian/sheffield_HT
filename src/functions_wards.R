@@ -14,19 +14,28 @@ ward_occupation <- function(wards.patients=wards.patients){
                         mydata$ward[i] <- NA
                 } else mydata$ward[i] <- ifelse(mydata$ward.count[i]>1 | mydata$loc1[i]=='multiple', 'multiple', mydata$ward[i])
         }; rm(i)
-        wards.staff <- mydata[mydata$category=='staff',c('barcode','ward','dateofcollection', 'dateofcollection')]
-        wards.staff <- clean_data(wards.staff, guess_dates = c(3,4))
-        names(wards.staff)<-c('id','ward','adm', 'dis')
+        wards.staff <- mydata[mydata$category=='staff',c('barcode','ward','dateofcollection')]
+        wards.staff <- clean_data(wards.staff, guess_dates = c(3))
+        names(wards.staff)<-c('id','ward','adm')
+        wards.staff$dis <- wards.staff$adm
         wards.staff$adm <- wards.staff$adm-14
+        wards.staff$admP <- as.POSIXct(wards.staff$admP)
+        wards.staff$disP <- as.POSIXct(wards.staff$disP)
         
         #load wards object for patients
+        
+        admP <- as.POSIXct(wards.patients$adm)
+        disP <- as.POSIXct(wards.patients$dis)
+        wards.patients<- clean_data(wards.patients, guess_dates = c(3,4))
         wards.patients<- clean_data(wards.patients, guess_dates = c(3,4))
         wards.patients<- wards.patients[wards.patients$id%in%unique(mydata$barcode),]
+        wards.patients$admP <- admP
+        wards.patients$disP <- disP
         
         #combine wards objects
         pre.wards <- rbind(wards.staff,wards.patients); pre.wards<- as.data.frame(pre.wards)
         pre.wards<- pre.wards[order(pre.wards["id"],pre.wards[,"adm"], pre.wards[,"dis"] ),]
-
+        
         
         #check ward occupation data do not overlap
         #subset observations with multiple ward occupation
@@ -44,6 +53,7 @@ ward_occupation <- function(wards.patients=wards.patients){
         #clean observations with multiple ward occupation
         multiples.fixed <- data.frame()
         for (i in unique(multiples$id)){
+                t12<-as.times("12:00:00") #reference time
                 myind.multiple <- multiples[multiples$id==i,]
                 myind.multiple <- myind.multiple %>% distinct() #remove duplicated rows
                 while (nrow(myind.multiple)>1) {
@@ -58,29 +68,34 @@ ward_occupation <- function(wards.patients=wards.patients){
                                 myperiod <- as.period(myintersect)
                                 myperiod@day <- myperiod@day+1 #count same day
                                 loc <- unique(myind$ward)
+                                t1<-times(strftime(myind$disP[1],"%H:%M:%S"))
                                 if(myind$adm[1]!=myind$dis[1] & myind$adm[2]!=myind$dis[2]){ #both intervals are multiple days
                                         myind$dis[1] <- myind$dis[1]-myperiod@day
                                         myind$adm[2] <- myind$adm[2]+myperiod@day
                                         myind[nrow(myind)+1,] <- NA; myind$id[3]<- myind$id[1]
                                         myind$adm[3] <- myind$dis[3] <- as.Date(myintersect@start)
-                                        myind$ward[3] <- ifelse(length(loc)==1, loc, 'multiple')   
+                                        myind$ward[3] <- ifelse(t1>t12, myind$ward[1], myind$ward[2]) #use ward freq   
+                                        # myind$ward[3] <- ifelse(length(loc)==1, loc, 'multiple') #use "multiple"    
                                         myind<-myind[c(1,3,2),]
                                         multiples.fixed <- rbind(multiples.fixed, myind[1:2,])
                                         myind.multiple <- rbind(myind[3,],myind.multiple)
                                 } else {#one intervals is a single day
                                         if(myind$adm[1]!=myind$dis[1] & myind$adm[2]==myind$dis[2]){ #second interval is one single day
-                                                myind$ward[2] <- ifelse(length(loc)==1, loc, 'multiple') #set uncertainty in the location
+                                                myind$ward[2] <- ifelse(t1>t12, myind$ward[1], myind$ward[2]) #use ward freq   
+                                                #myind$ward[2] <- ifelse(length(loc)==1, loc, 'multiple') #set uncertainty in the location
                                                 myind$dis[1] <- myind$dis[1]-myperiod@day
                                                 multiples.fixed <- rbind(multiples.fixed, myind[1,])
                                                 myind.multiple <- rbind(myind[2,],myind.multiple)
                                         }else{
                                                 if(myind$adm[1]==myind$dis[1] & myind$adm[2]!=myind$dis[2]) { #first interval is one single day
-                                                        myind$ward[1] <- ifelse(length(loc)==1, loc, 'multiple') #set uncertainty in the location
+                                                        myind$ward[1] <- ifelse(t1>t12, myind$ward[1], myind$ward[2]) #use ward freq   
+                                                        # myind$ward[1] <- ifelse(length(loc)==1, loc, 'multiple') #set uncertainty in the location
                                                         myind$adm[2] <- myind$adm[2]+myperiod@day
                                                         multiples.fixed <- rbind(multiples.fixed, myind[1,])
                                                         myind.multiple <- rbind(myind[2,],myind.multiple)
                                                 } else{ #both intervals are one single day
-                                                        myind$ward <- ifelse(length(loc)==1, loc, 'multiple') #uncertainty in the location
+                                                        myind$ward <- ifelse(t1>t12, myind$ward[1], myind$ward[2]) #use ward freq   
+                                                        # myind$ward <- ifelse(length(loc)==1, loc, 'multiple') #uncertainty in the location
                                                         myind.multiple <- rbind(myind[2,],myind.multiple)
                                                 }
                                         }
