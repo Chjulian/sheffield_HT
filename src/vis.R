@@ -22,8 +22,13 @@ plot(res,  type = "t_inf", burnin = 1000)
 ##generation between cases
 plot(res, type = "kappa", burnin = 1000)
 # 
-#mutation rate
+#mutation rate and other params
 plot(res, "mu", burn = 1000, type = "density") 
+hist(res$eps)
+hist(res$tau)
+hist(res$pi)
+
+
 
 # transmission trees
 mynetwork<-plot(res,  type = "network", burnin = 1000, 
