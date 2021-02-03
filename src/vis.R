@@ -1,4 +1,11 @@
-d<- d0
+pacman::p_load(ape, linelist, epitrix, fitdistrplus,
+               outbreaker2, tidyverse, rio, 
+               magrittr, remotes, epicontacts, 
+               visNetwork, lubridate, pairsnp,
+               ggplot2, chron) 
+
+d<- d_noNAwards
+
 
 #visualization of consensus tree
 cons_tree <- vis_epicontacts(d$cons_tree,
