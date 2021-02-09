@@ -19,13 +19,13 @@ source("src/functions_wards.R")
 source("src/functions_maxdist.R")
 source("src/onset_distribution.R")
 
-max_dist <- 0
+max_dist <- 2
 
 #################################
 #load linelist data
 #################################
 # load data, clean dates and filter-out observations
-mydata <- read.csv("data/hoci-phylo-metadata-onset-2020-09-16.V1.2.121120.csv",
+mydata <- read.csv("data/hoci-phylo-metadata-onset-2021-02-07.csv",
                    stringsAsFactors =F)
 mydata <- onsetdistribution(mydata)
 mydata<- clean_data(mydata, guess_dates = which(names(mydata)=='DateOfOnset_forAnalysis'))
@@ -37,12 +37,12 @@ mydata <- mydata[!is.na(mydata$dateofonset_foranalysis),]
 #load dna data in DNAbin format, 
 #################################
 #one sequence per individual
-dna <- read.FASTA("data/hoci_phylo-2020-09-03_error-removed_masked.aln")
+dna <- read.FASTA("data/hoci_phylo-2021-02-07_error-removed_masked.aln")
 mylabels <- clean_data(as.data.frame(names(dna)))
 names(dna) <- mylabels$names_dna
 dna <- dna[mydata$barcode]; mylabels <- names(dna)
-write.FASTA(dna, "data/hoci_phylo-2020-09-03_error-removed_masked.ord.aln")
-dna.SNP <- import_fasta_sparse("data/hoci_phylo-2020-09-03_error-removed_masked.ord.aln") %>% snp_dist(.)
+write.FASTA(dna, "data/hoci_phylo-2021-02-07_error-removed_masked.ord.aln")
+dna.SNP <- import_fasta_sparse("data/hoci_phylo-2021-02-07_error-removed_masked.ord.aln") %>% snp_dist(.)
 rownames(dna.SNP) <- colnames(dna.SNP) <- mylabels; rm(mylabels)
 
 #################################
@@ -54,7 +54,7 @@ names(date_onset) <- rep("local", length(date_onset))
 #################################
 #Consolidate ward data
 #################################
-wards.patients<- read.csv("data/patient-ward-movements-20201207.csv")
+wards.patients<- read.csv("data/patient-ward-movements-20210207.csv")
 wards.patients<- wards.patients[,c('Barcode','Ward','In','Out')]
 names(wards.patients) <- c('id','ward','adm','dis') #rename as examples files for consistency
 wards<- ward_occupation(wards.patients=wards.patients)
