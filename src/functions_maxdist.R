@@ -1,7 +1,7 @@
 ## Identify a starting tree with the fewest number of 'imports' as given by the
 ## timed contact data
 get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
-
+  
   ## set up config to only look for direct ward contacts
   tmp_config <- create_config(
     n_iter = n_iter, init_pi = 1, move_pi = FALSE,
@@ -17,37 +17,37 @@ get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
     p_wrong = 1e-15
   )
   data$p_wrong <- tmp_config$p_wrong
-
+  
   ## do first run
   cat("Finding direct ward contacts...\n")
   first_run <- outbreaker(data, tmp_config)
-
+  
   ## get false negatives
   fn <- get_ward_fn(first_run)
-
+  
   ## carry over ancestries and infection times to second run
   n <- nrow(first_run)
   nm <- names(first_run)
   tmp_config$init_alpha <- tmp_config$init_tree <- unlist(first_run[n, grep('alpha', nm)])
   tmp_config$init_t_inf <- unlist(first_run[n, grep('t_inf', nm)])
-
+  
   ## if a false negative, set kappa to 2
   tmp_config$init_kappa <- as.integer(ifelse(fn, 2, 1))
   tmp_config$init_t_onw <- tmp_config$init_t_inf - 1
-
+  
   ## find those with only 1 day between t_inf and t_inf_alpha - this makes an
   ## intermediate case impossible so we set the starting infector to earliest
   ## case
   to_fix <- tmp_config$init_t_onw - tmp_config$init_t_inf[tmp_config$init_tree] == 0
   tmp_config$init_tree[which(to_fix)] <- which.min(data$dates)
   tmp_config$init_alpha <- tmp_config$init_tree
-
+  
   ## keep the number of unobserved cases fixed but explore ancestries
   tmp_config[c("move_kappa", "move_alpha", "find_import", "move_tau", "swap_place")] <- FALSE
   tmp_config$move_joint <- tmp_config$move_model <- TRUE
   data$swap_place <- FALSE
   tmp_config$sd_t_onw <- 30
-
+  
   ## edge cases if tau or eps is 1
   tmp_config$init_pi <- 0.5
   if(config$init_tau == 1) {
@@ -62,16 +62,16 @@ get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
   } else {
     tmp_config$init_eps <- 0.5
   }
-
+  
   ## second run
   cat("Finding indirect ward contacts...\n")
   sec_run <- outbreaker(data, tmp_config)
   if(config$init_eps == 1) sec_run$eps <- 1
   if(config$init_tau == 1) sec_run$tau <- 1
-
+  
   ## get remaining false negatives
   fn <- get_ward_fn(sec_run) == 1
-
+  
   ## carry over ancestries, infection times and kappa
   n <- nrow(sec_run)
   nm <- names(sec_run)
@@ -80,28 +80,28 @@ get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
   config$init_t_onw <- unlist(sec_run[n, grep('t_onw',nm)])
   config$init_kappa <- unlist(sec_run[n, grep('kappa',nm)])
   config$init_t_onw[config$init_kappa == 1] <- -1000
-
+  
   ## include max_dist in false negatives/imports
   fn[data$D[cbind(seq_along(config$init_alpha), config$init_alpha)] > max_dist] <- TRUE
-
+  
   ## no longer find imports as they have been identified above
   config$find_import <- FALSE
-
+  
   ## settings for false negatives
   config$init_alpha[fn] <-
     config$init_tree[fn] <-
     config$init_t_onw[fn] <-
     config$init_kappa[fn] <- NA
-
+  
   cat(paste0("Identified ", sum(is.na(config$init_alpha)),
              " seperate transmission chains.\n"))
-
+  
   ## first_run <<- first_run
   ## sec_run <<- sec_run
   ## fn <<- fn
-
+  
   return(config)
-
+  
 }
 
 ## extract ward info
@@ -113,11 +113,11 @@ get_ward <- function(i, t, data) {
 
 ## Get the number of false negatives (ie missing contacts) in your proposed tTree
 get_ward_fn <- function(x) {
-
+  
   calc_fn <- function(from, to, t_inf, t_onw, kappa, eps, tau) {
-
+    
     if(is.na(from)) return(0)
-
+    
     if(kappa == 1) {
       ind1 <- t_inf + C_ind + 1
       if(ind1 < 1 | ind1 > ncol(data$ctd_timed_matrix)) return(1)
@@ -145,11 +145,11 @@ get_ward_fn <- function(x) {
       }
     }
   }
-
+  
   ## get dimensions and name
   n <- nrow(x)
   nm <- names(x)
-
+  
   ## extract data
   from <- unlist(x[n, grep('alpha', nm)])
   to <- seq_along(from)
@@ -158,31 +158,31 @@ get_ward_fn <- function(x) {
   kappa <- unlist(x[n, grep('kappa', nm)])
   eps <- unlist(x[n, grep('eps', nm)])
   tau <- unlist(x[n, grep('tau', nm)])
-
+  
   if(is.null(eps)) eps <- 0.5
   if(is.null(tau)) tau <- 0.5
   if(is.null(t_onw)) t_onw <- rep(1, length(from))
   t_onw[is.na(t_onw)] <- -1
-
+  
   data$ctd_timed_matrix <- data$ctd_timed_matrix[[1]]
   C_ind <- data$C_ind
-
+  
   ## calculate false negatives
   out <- mapply(calc_fn, from, to, t_inf, t_onw, kappa, MoreArgs = list(eps, tau))
-
+  
   return(out)
-
+  
 }
 
 ## Visualise the wards
 vis_ward <- function(res, meta, wards, ord = NULL, consensus = FALSE,
                      alph = 0.01, size = 4, nrow = 2, thin = 1) {
-
+  
   ind <- seq(1, nrow(res), by = thin)
   res <- res[ind,]
-
+  
   labs <- as.character(meta$id)
-
+  
   if(is.null(ord)) {
     ord <- get_order(res)
     tree_sort <- match(ord, labs)
@@ -191,28 +191,28 @@ vis_ward <- function(res, meta, wards, ord = NULL, consensus = FALSE,
     tree_sort <- match(ord, labs)
     ord <- match(meta$id, ord)
   }
-
+  
   lett <- apply(combn(letters[1:26], 2), 2, paste, collapse = "")
   meta$id <- lett[ord]
   wards$id <- meta$id[match(wards$id, labs)]
-
+  
   ## Get inferred infection times
   t_inf <- as.matrix(res[,grep("t_inf", names(res))])
   alpha <- as.matrix(res[,grep("alpha", names(res))])
   t_onw <- as.matrix(res[,grep("t_onw", names(res))])
   kappa <- as.matrix(res[,grep("kappa", names(res))])
-
+  
   id <- meta$id[col(t_inf)]
   t_inf <- as.vector(t_inf)
   t_onw <- as.vector(t_onw)
   kappa <- as.vector(kappa)
   alpha  <- meta$id[as.vector(alpha)]
-
+  
   meta$id %<>% factor(levels = .[ord])
   wards$id %<>% factor(levels = levels(meta$id))
   id %<>% factor(levels = levels(meta$id))
   alpha %<>% factor(levels = levels(meta$id))
-
+  
   if(!consensus) {
     df2 <- data.frame(date_from = t_inf,
                       date_to = t_inf,
@@ -237,7 +237,7 @@ vis_ward <- function(res, meta, wards, ord = NULL, consensus = FALSE,
     my_scale <- scale_size_continuous(range = c(0.2, 1))
     alph <- 1
   }
-
+  
   df2$date_from[df2$kappa > 1 & !is.na(df2$kappa)] <- t_onw[df2$kappa > 1 & !is.na(df2$kappa)]
   df2 %<>%
     mutate(
@@ -245,20 +245,20 @@ vis_ward <- function(res, meta, wards, ord = NULL, consensus = FALSE,
       date_to = as.Date(.$date_to, origin = min(meta$date_onset)),
       kappa = .$kappa > 1
     )
-
+  
   df2 <- df2 %>%
     group_by(date_from, date_to, kappa, id, alpha) %>%
     mutate(support = n()) %>%
     ungroup() %>%
     group_by(id) %>%
     mutate(support = support/sum(support))
-
-
+  
+  
   df3 <- transmute(meta, id = id, date = date_onset)
-
+  
   ## This will ensure ward occupancy is displayed until the end of day of discharge
   wards$dis %<>% add(1)
-
+  
   ggplot(wards) +
     geom_segment(aes(y = adm - 0.5, x = id,
                      xend = id, yend = dis + 0.5),
@@ -283,7 +283,7 @@ vis_ward <- function(res, meta, wards, ord = NULL, consensus = FALSE,
            color = guide_legend(nrow = nrow)) +
     scale_linetype_manual(values = c("solid", "solid")) +
     theme(legend.position = 'bottom', legend.direction = 'horizontal')
-
+  
 }
 
 ## Recursive function to identify how many layers deep a case is
@@ -301,7 +301,7 @@ get_depth <- function(i, counter, alpha) {
 ## closest to its infectees, starting at the leaves of the tree and moving to
 ## the root
 get_order <- function(res) {
-
+  
   get_sq <- function(len) {
     if(len %% 2 != 0) {
       len <- len + 1
@@ -314,27 +314,27 @@ get_order <- function(res) {
     if(odd) out <- out[-1]
     return(out)
   }
-
+  
   tree <- summary(res)$tree
   epi <- make_epicontacts(tree, tree, id = 2, na_rm_contacts = TRUE)
-
+  
   coor <- get_coor(
     epi, 't_inf',
     rank_contact = 'from',
     axis_type = 'none',
     unlinked_pos = 'bottom'
   )
-
+  
   return(meta$id[order(coor$y)])
-
+  
 }
 
 ## summarise ward data (all from-to and ward_from-ward_to combinations)
 get_ward_summary <- function(res, data) {
-
+  
   ## extract information for a single MCMC draw
   extract <- function(from, to, t_inf, t_onw, kappa) {
-
+    
     if(is.na(from)) {
       out <- tibble(from = from, to = to, ward_from = NA, ward_to = NA, kappa = NA, t_inf = NA)
     } else {
@@ -352,10 +352,10 @@ get_ward_summary <- function(res, data) {
     }
     return(out)
   }
-
+  
   ## summarise ward information across all MCMC steps
   get_summary <- function(i, res) {
-
+    
     ## extract data
     nm <- names(res)
     from <- unlist(res[i, grep('alpha', nm)])
@@ -363,23 +363,23 @@ get_ward_summary <- function(res, data) {
     t_inf <- unlist(res[i, grep('t_inf', nm)])
     t_onw <- unlist(res[i, grep('t_onw', nm)])
     kappa <- unlist(res[i, grep('kappa', nm)])
-
+    
     if(is.null(t_onw)) t_onw <- rep(1, length(from))
     t_onw[is.na(t_onw)] <- -1
-
+    
     ## calculate false negatives
     mapply(extract, from, to, t_inf, t_onw, kappa, SIMPLIFY = FALSE) %>%
       bind_rows()
-
+    
   }
-
+  
   ## assign some variables for later use
   data$ctd_timed_matrix <- data$ctd_timed_matrix[[1]]
   C_ind <- data$C_ind
-
+  
   ## match ward names to incices used in outbreaker
   ward_match <- unique(data$ctd_timed[,2])[!is.na(unique(data$ctd_timed[,2]))]
-
+  
   lapply(seq_len(nrow(res)), get_summary, res) %>%
     bind_rows() %>%
     mutate(
@@ -387,7 +387,7 @@ get_ward_summary <- function(res, data) {
       across(c(from, to), ~data$ids[.])
     ) %>%
     arrange(to)
-
+  
 }
 
 ## this is a recursive function calculating various properties of the leaf node
@@ -399,7 +399,7 @@ get_ward_summary <- function(res, data) {
 ## attributes (e.g. difference in times of infection if rank_contact = 't_inf')
 get_treestat <- function(i, depth, subtree_size, contacts, linelist, leaf,
                          rank_contact, reverse_rank_contact, leaf_parent) {
-
+  
   ## identify parent by choosing highest ranked edge
   parents_ind <- which(contacts$to == i)
   parents <- contacts$from[parents_ind]
@@ -415,15 +415,15 @@ get_treestat <- function(i, depth, subtree_size, contacts, linelist, leaf,
   } else {
     parent <- parents
   }
-
+  
   ## store parent of the leaf
   if(is.null(leaf_parent)) leaf_parent <- parent
-
+  
   ## error if network is cyclical
   if(!is.na(parent) & parent == leaf) {
     stop("pruned network still contains cycles")
   }
-
+  
   ## return results if root is hit or go one layer higher
   if(is.na(parent) || parent == 0) {
     return(list(depth = depth,
@@ -448,7 +448,7 @@ get_treestat <- function(i, depth, subtree_size, contacts, linelist, leaf,
 ## 'rank_contact'
 prune_cycles <- function(i, leaf, contacts, cycle_edges,
                          rank_contact, reverse_rank_contact) {
-
+  
   ## choose parent with highest ranked edge
   parents <- contacts[which(contacts$to == i),]
   if(nrow(parents) == 0) {
@@ -462,12 +462,12 @@ prune_cycles <- function(i, leaf, contacts, cycle_edges,
   } else {
     parent <- parents
   }
-
+  
   ## return contacts if root found
   if(is.na(parent$from) || parent$from == 0) {
     return(contacts)
   }
-
+  
   ## if this parent exists in the cycle, a cycle has been identified, the lowest
   ## ranked edge is removed and the pruning function is restarted to make sure no other
   ## cycles exist
@@ -475,22 +475,22 @@ prune_cycles <- function(i, leaf, contacts, cycle_edges,
     cycle_edges <- rbind(cycle_edges, parent)
     edge_remove <- cycle_edges[which.min(cycle_edges[[rank_contact]]),]
     contacts <- contacts[-which(contacts$from == edge_remove$from &
-                                contacts$to == edge_remove$to),]
+                                  contacts$to == edge_remove$to),]
     ## restart loop from leaf with pruned contacts
     contacts <- prune_cycles(leaf, leaf, contacts, NULL,
                              rank_contact, reverse_rank_contact)
-
+    
   } else {
-
+    
     ## if no loop, move onwards
     cycle_edges <- rbind(cycle_edges, parent)
     contacts <- prune_cycles(parent$from, leaf, contacts, cycle_edges,
                              rank_contact, reverse_rank_contact)
-
+    
   }
-
+  
   return(contacts)
-
+  
 }
 
 ## get_child_pos outputs children node positions relative to the parent
@@ -500,11 +500,11 @@ get_child_pos <- function(n_children,
                           parent_pos = 'middle',
                           custom_parent_pos = NULL,
                           position_dodge = FALSE) {
-
+  
   if(is.null(custom_parent_pos)) {
-
+    
     if(parent_pos == 'middle') {
-
+      
       if(n_children %% 2 != 0 & position_dodge) {
         n_children <- n_children + 1
         odd <- TRUE
@@ -514,32 +514,32 @@ get_child_pos <- function(n_children,
       sq <- seq(1, 1 + 2*(n_children - 1), 2)
       out <- sq - stats::median(sq)
       if(odd & position_dodge) out <- out[-1]
-
+      
     } else if(parent_pos == 'bottom') {
-
+      
       if(position_dodge) {
         out <- 1:n_children
       } else {
         out <- 0:(n_children - 1)
       }
-
+      
     } else if(parent_pos == 'top') {
-
+      
       if(position_dodge) {
         out <- (1:n_children)*-1
       } else {
         out <- (0:(n_children - 1)*-1)
       }
-
+      
     }
   } else {
-
+    
     out <- custom_parent_pos(n_children)
-
+    
   }
-
+  
   return(out)
-
+  
 }
 
 ## this function will order the cases in such a manner that parent nodes are
@@ -560,47 +560,47 @@ get_coor <- function(x,
                      custom_parent_pos = NULL,
                      method = 'ttree',
                      igraph_type = NULL) {
-
+  
   axis_type <- match.arg(axis_type)
-
+  
   ## add cluster membership, for use in root clustering
   x <- get_clusters(x)
   linelist <- x$linelist
   contacts <- x$contacts
-
+  
   ## if rank_contact is a node attribute, calculate an edge attribute for each
   ## contact by taking the difference in node attributes
   if(!rank_contact %in% names(contacts)) {
-
+    
     if(!rank_contact %in% names(linelist)) {
       stop("rank_contact is not found in linelist or contacts")
     }
-
+    
     if(!inherits(linelist[[rank_contact]],
                  c("Date", "numeric", "integer", "POSIXct", "POSIXt"))) {
       stop("rank_contact must indicate a Date, numeric or integer value")
     }
-
+    
     from_ind <- match(contacts$from, linelist$id)
     to_ind <- match(contacts$to, linelist$id)
-
+    
     weight <- linelist[[rank_contact]][to_ind] - linelist[[rank_contact]][from_ind]
     contacts[[rank_contact]] <- as.numeric(weight)
-
+    
   }
-
+  
   N <- nrow(linelist)
-
+  
   ## depth is the number of generations between a leaf and its root (+ 1)
   depth <- rep(0, N)
-
+  
   ## parent is the parent node in the 'scaffold' tree (if multiple parents
   ## exist, one of these is selected to build the scaffold tree)
   parent <- root <- rep(NA, N)
-
+  
   ## subtree size is the number of nodes downstream of a given node
   subtree_size <- rep(1, N)
-
+  
   ## cycles are removed when building the scaffold tree by recursively removing
   ## the lowest ranked edge in a cycle (as defined by rank_contact)
   contacts_clean <- contacts
@@ -612,7 +612,7 @@ get_coor <- function(x,
                                    rank_contact = rank_contact,
                                    reverse_rank_contact = reverse_rank_contact)
   }
-
+  
   ## calculate various tree statistics using scaffold tree
   for(i in linelist$id) {
     treestat <- get_treestat(i,
@@ -630,65 +630,65 @@ get_coor <- function(x,
     root[ind] <- treestat$root
     subtree_size <- treestat$subtree_size
   }
-
+  
   ## add subtree size to linelist so that it can be called in node_order
   linelist$subtree_size <- subtree_size
-
+  
   ## NAs treated as 0 to be safe, though these should be removed beforehand
   contacts$from[is.na(contacts$from)] <- 0
-
+  
   ## pos is a matrix with the ranking of a node relative to its parent at each
   ## depth. every node inherits the ranking of its parent, ensuring nodes only
   ## split from their parents at the correct depth
   pos <- matrix(0, nrow(linelist), max(depth))
-
+  
   ## iterate across every depth and split cases at that depth
   for(i in seq_len(max(depth))) {
-
+    
     ## index of the cases found at a given depth i
     ind <- which(depth == i)
-
+    
     ## child_pos_add will be the ranking of a child relative to its parent
     child_pos_add <- numeric(length(ind))
-
+    
     ## non-root cases
     if(i > 1) {
-
+      
       ## group nodes into siblings with shared parent
       siblings_grouped <- split(ind, parent[ind])
-
+      
       for(siblings in siblings_grouped) {
-
+        
         ## get the child position relative to the parent
         child_pos <- get_child_pos(length(siblings), parent_pos, custom_parent_pos, position_dodge)
-
+        
         ## re-order siblings by order_nodes
         if(!is.null(node_order)) {
           siblings <- siblings[order(linelist[[node_order]][siblings],
                                      decreasing = reverse_node_order)]
         }
-
+        
         ## add children position according to ordering
         child_pos_add[match(siblings, ind)] <- child_pos
-
+        
       }
-
+      
       ## children adopt ranking values from parent
       pos[ind, 1:(i-1)] <- pos[match(parent[ind], linelist$id), 1:(i-1)]
-
+      
     } else {
-
+      
       ## this section links roots that are connected by secondary connections
       n_parents <- table(contacts$to)
       multiple_parents <- names(n_parents)[n_parents > 1]
       if(length(multiple_parents) > 0) {
-
+        
         ## identify cluster, group roots by cluster
         linelist$cluster_member <- as.numeric(linelist$cluster_member)
         root_ind <- match(unique(root), linelist$id)
         linked <- split(linelist$id[root_ind],
                         linelist$cluster_member[root_ind])
-
+        
         ## get all combinations of linked roots
         get_combn <- function(j) if(length(unique(j)) > 1) t(utils::combn(unique(j), 2))
         linked_roots <- lapply(linked, get_combn)
@@ -696,23 +696,23 @@ get_coor <- function(x,
         if(length(linked_roots) > 0) {
           linked_roots <- do.call(rbind, linked_roots)
         }
-
+        
       } else {
         linked_roots <- numeric()
       }
-
+      
       ## get position of roots
       child_pos <- get_child_pos(length(ind), parent_pos, custom_parent_pos, position_dodge)
-
+      
       if(!is.null(root_order)) {
-
+        
         ## get initial ordering of roots by root_order
         ord <- order(linelist[[root_order]][ind], decreasing = reverse_root_order)
-
+        
         ## if linked roots exist, these are placed next to each other. a 'root
         ## of roots' which is highest ranked in root_order is chosen
         if(length(linked_roots) > 0) {
-
+          
           ## bring the lower ranked root (from root_order) right below the
           ## higher ranked root by subtracting 0.0001
           for(j in seq_len(nrow(linked_roots))) {
@@ -721,65 +721,65 @@ get_coor <- function(x,
             max_ind <- match(linked_roots[j, which.max(sub_ord)], linelist$id[ind])
             ord[min_ind] <- ord[max_ind] - 0.0001*j
           }
-
+          
           ## roots are now re-ordered the roots, considering only the 'roots of
           ## roots', ie the base root of a group of linked roots
           rr <- ord %in% ceiling(ord)
-
+          
           ## this points to the root of each root
           rr_ind <- match(ceiling(ord), ord[rr])
-
+          
           ## this gets the rank of the root of roots
           rr_ord <- rank(linelist[[root_order]][ind][rr],
                          ties.method = "first")
-
+          
           ## this places the roots under the roots of roots
           diff <- ord - ceiling(ord)
           ord <- rr_ord[rr_ind] + diff
-
+          
           ## get indices and get child positions
           ord <- match(ord, sort(ord))
           child_pos_add <- child_pos[ord]
-
+          
         } else {
-
+          
           ## add normal child positions if we don't have linked roots
           child_pos_add[ord] <- child_pos
-
+          
         }
-
+        
       } else {
-
+        
         ## if node order is null, use native ordering in linelist
         child_pos_add <- child_pos
-
+        
       }
-
+      
     }
-
+    
     ## add the child positions at the given depth
     pos[ind, i] <- child_pos_add
-
+    
   }
-
+  
   ## this is true if i is ranked higher than j (essentially looks at the
   ## difference in ranking at each depth and choose the first difference)
   is_higher <- function(i, j) {
     comp <- pos[i,] - pos[j,]
     out <- comp[comp != 0][1] > 0
   }
-
+  
   ## rank all cases by pairwise comparison - this is quite slow for large
   ## networks, there is definitely a quicker way
   comb <- expand.grid(seq_len(nrow(pos)), seq_len(nrow(pos)))
   rel_pos <- matrix(FALSE, nrow = nrow(pos), ncol = nrow(pos))
-
+  
   rel_pos[as.matrix(comb)] <- apply(comb, 1, function(x) is_higher(x[1], x[2]))
   rel_pos[is.na(rel_pos)] <- FALSE
-
+  
   ## get global ranking by taking the sum of all pairwise rankings
   abs_pos <- apply(rel_pos, 1, sum)
-
+  
   ## Get isolated cases and place them as specified by unlinked_pos
   ## If position_dodge, order these by root_order
   contacts <- contacts[contacts$from != 0,]
@@ -793,7 +793,7 @@ get_coor <- function(x,
       unlinked_order <- seq_along(unlinked)
       unlinked_to_add <- 0
     }
-
+    
     ## Place nodes at top or bottom by adding 10000 to abs_pos
     if(unlinked_pos == 'top') {
       abs_pos[unlinked[unlinked_order]] <- 10000 + unlinked_to_add
@@ -801,27 +801,27 @@ get_coor <- function(x,
       abs_pos[unlinked[unlinked_order]] <- -10000 + unlinked_to_add
     }
   }
-
+  
   ## use igraph coordinate calculations instead
   if(!is.null(igraph_type)) {
-
+    
     net <- igraph::graph_from_data_frame(stats::na.omit(x$contacts),
                                          vertices = x$linelist)
-
+    
     if(igraph_type == 'rt') {
       abs_pos <- igraph::layout.reingold.tilford(net, root = which(depth == 1))[,1]
     } else if(igraph_type == 'sugiyama') {
       abs_pos <- igraph::layout.sugiyama(net, layers = x$linelist[[x_axis]])$layout[,1]
     } else if(igraph_type == 'fr') {
       abs_pos <- igraph::layout.fruchterman.reingold(net,
-                                                 minx = x$linelist[[x_axis]],
-                                                 maxx = x$linelist[[x_axis]])[,2]
+                                                     minx = x$linelist[[x_axis]],
+                                                     maxx = x$linelist[[x_axis]])[,2]
     } else {
       stop("igraph_type must be one of 'rt', 'sugiyama' or 'fr'")
     }
-
+    
   }
-
+  
   ## this orders the cases and adds y_adj positions at the top and bottom to
   ## provide space for the axes
   y_adj <- 2
@@ -840,10 +840,10 @@ get_coor <- function(x,
     y_pos <- match(abs_pos, sort(unique(abs_pos)))
     y_pos <- rescale(y_pos, 0, 1)
   }
-
+  
   ## Also return parent because we need scaffold tree for later
   return(list(y = y_pos, subtree_size = subtree_size))
-
+  
 }
 
 ## Rescale a vector of numerics to min and max
@@ -861,27 +861,27 @@ get_mindist <- function(dist) {
 
 ## Fill in an MCMC state from a given row in the outbreaker output
 update_par <- function(param, i, res, data, config) {
-
+  
   unl <- function(...) unlist(..., use.names = FALSE)
   param$alpha <- as.vector(unl(res[i, grep('alpha', names(res))]))
   param$t_inf <- as.vector(unl(res[i, grep('t_inf', names(res))]))
   param$t_onw <- as.vector(unl(res[i, grep('t_onw', names(res))]))
   param$kappa <- as.integer(as.vector(unl(res[i, grep('kappa', names(res))])))
-
+  
   param$pi <- unl(res[i, grep('pi', names(res))])
   param$eps <- unl(res[i, grep('eps', names(res))])
   param$lambda <- unl(res[i, grep('lambda', names(res))])
   param$eta <- unl(res[i, grep('eta', names(res))])
   param$tau <- unl(res[i, grep('tau', names(res))])
   param$mu <- unl(res[i, grep('mu', names(res))])
-
+  
   param$t_onw[is.na(param$t_onw)] <- -1000
   param$kappa[is.na(param$kappa)] <- 1
-
-#  param$trans_mat <- update_trans(data, param, config)
-
+  
+  #  param$trans_mat <- update_trans(data, param, config)
+  
   return(param)
-
+  
 }
 
 ## get minimum genetic distance across all posterior draws
@@ -930,19 +930,19 @@ get_tpairs <- function(res, data) {
 
 ## get potential ancestors on the same ward with a max genetic distance
 get_potential <- function(i, data, max_dist = 0) {
-
+  
   onset <- data$dates[i]
   dates <- (onset - 30):(onset - 1)
   potential <- which(data$D[i,] <= max_dist)
   potential <- potential[potential != i]
-
+  
   wards <- get_ward(i, dates, data)
   potential_wards <- sapply(potential, get_ward, dates, data)
-
+  
   ## find the case-date where the ward is the same
   matches <- apply(potential_wards, 2, function(x) x == wards & !x %in% c(-1, 0))
   ind <- which(matches, arr.ind = TRUE)
-
+  
   tibble(
     from = potential[ind[,2]],
     to = i,
@@ -955,11 +955,34 @@ get_potential <- function(i, data, max_dist = 0) {
     ward_from = mapply(get_ward, from, t_inf, MoreArgs = list(data = data))
   ) %>%
     filter(t_inf < t_ons_from)
-
+  
 }
 
 ## get the ward likelihood from the wards
 get_ward_ll <- function(w1, w2, trans_mat, kappa = 1) {
   arr <- array(param$trans_mat[[1]], dim = c(100, 100, 5))
   arr[w1 + 1, w2 + 1, kappa]
+}
+
+## poisson ll with i subsetting
+ll_pois_i <- function(data, param, i = NULL) {
+  if(is.null(i)) i <- seq_along(param$alpha)
+  sum(
+    dpois(
+      data$D[cbind(param$alpha[i], i)],
+      mu*param$kappa[i],
+      log = TRUE
+    ),
+    na.rm = TRUE
+  )
+}
+
+## Get alpha and beta of beta distribution from mean and var
+get_beta_par <- function(mu, sd = NULL, cv = NULL) {
+  if(!is.null(sd)) var <- sd^2
+  if(is.null(var)) var <- (mu*cv)^2
+  if(var >= mu*(1-mu)) stop("var is too large")
+  alpha <- ((1 - mu) / var - 1 / mu) * mu ^ 2
+  beta <- alpha * (1 / mu - 1)
+  return(c(alpha, beta))
 }
