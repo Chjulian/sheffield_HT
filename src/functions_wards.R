@@ -113,7 +113,8 @@ ward_occupation <- function(wards.patients=wards.patients){
         #Join ward data
         wards <- rbind(wards, multiples.fixed); rm(pre.wards, multiples.fixed, wards.patients, wards.staff)         
         wards <- wards[wards$id%in%mydata$barcode,]
-        mydata <<- mydata;
+        wards <- wards[,1:4]
+        mydata <<- mydata
         return(wards)
 }
 
