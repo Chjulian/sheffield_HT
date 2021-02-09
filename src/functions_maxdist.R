@@ -1,7 +1,6 @@
-##Written by Finlay
 ## Identify a starting tree with the fewest number of 'imports' as given by the
 ## timed contact data
-get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 0) {
+get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
 
   ## set up config to only look for direct ward contacts
   tmp_config <- create_config(
@@ -894,7 +893,7 @@ get_res_mindist <- function(res, dist) {
 }
 
 ## get potential ancestors for case i
-get_potential <- function(i, dist, dates) {
+get_potential_old <- function(i, dist, dates) {
   mindist <- get_mindist(dist)[i]
   potential <- which(dist[i,] == mindist)
   potential <- potential[potential != i]
@@ -906,4 +905,61 @@ get_potential <- function(i, dist, dates) {
     function(x)
       any(get_ward(x, (data$dates[i]-30):(data$dates[i] - 1), data) != -1)
   )]
+}
+
+## extract transmission pair information
+get_tpairs <- function(res, data) {
+  lapply(
+    seq_len(sum(grepl("alpha", names(res)))),
+    function(i) {
+      tibble(
+        from = res[[glue("alpha_{i}")]],
+        to = i,
+        t_inf = res[[glue("t_inf_{i}")]],
+        t_onw = res[[glue("t_onw_{i}")]],
+        kappa = res[[glue("kappa_{i}")]],
+        ward_from = mapply(get_ward, from, ifelse(is.na(kappa) | kappa == 1, t_inf, t_onw), MoreArgs = list(data = data)),
+        ward_to = mapply(get_ward, to, t_inf, MoreArgs = list(data = data)),
+        dist = data$D[cbind(from, to)]
+      )
+    }
+  ) %>%
+    bind_rows() %>%
+    drop_na(from)
+}
+
+## get potential ancestors on the same ward with a max genetic distance
+get_potential <- function(i, data, max_dist = 0) {
+
+  onset <- data$dates[i]
+  dates <- (onset - 30):(onset - 1)
+  potential <- which(data$D[i,] <= max_dist)
+  potential <- potential[potential != i]
+
+  wards <- get_ward(i, dates, data)
+  potential_wards <- sapply(potential, get_ward, dates, data)
+
+  ## find the case-date where the ward is the same
+  matches <- apply(potential_wards, 2, function(x) x == wards & !x %in% c(-1, 0))
+  ind <- which(matches, arr.ind = TRUE)
+
+  tibble(
+    from = potential[ind[,2]],
+    to = i,
+    t_inf = dates[ind[,1]],
+    t_ons_to = data$dates[i],
+    t_ons_from = data$dates[from],
+    serial_interval = t_ons_to - t_ons_from,
+    incub_to = t_ons_to - t_inf,
+    ward_to = mapply(get_ward, to, t_inf, MoreArgs = list(data = data)),
+    ward_from = mapply(get_ward, from, t_inf, MoreArgs = list(data = data))
+  ) %>%
+    filter(t_inf < t_ons_from)
+
+}
+
+## get the ward likelihood from the wards
+get_ward_ll <- function(w1, w2, trans_mat, kappa = 1) {
+  arr <- array(param$trans_mat[[1]], dim = c(100, 100, 5))
+  arr[w1 + 1, w2 + 1, kappa]
 }

@@ -14,7 +14,7 @@ pacman::p_load(ape, linelist, epitrix, fitdistrplus,
                outbreaker2, tidyverse, rio, 
                magrittr, remotes, epicontacts, 
                visNetwork, lubridate, pairsnp,
-               ggplot2, chron) 
+               ggplot2, chron,glue) 
 source("src/functions_wards.R")
 source("src/functions_maxdist.R")
 source("src/onset_distribution.R")

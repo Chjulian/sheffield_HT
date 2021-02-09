@@ -19,7 +19,7 @@ for(i in 1:nrow(contacts)){
         if(!vector.is.empty(i.w)) contacts$overlap[i]<-i.w
         rm(x,y,x.w,y.w,i.w)
 }
-contacts$overlap <- str_replace_na(contacts$overlap)
+contacts$overlap <- stringr::str_replace_na(contacts$overlap)
 contacts$overlap<-stringr::str_replace_all(contacts$overlap, "multiple", "NA")
 contacts$overlap<-stringr::str_replace_all(contacts$overlap, "nncl", "NA")
 sum(contacts$overlap!="NA")
