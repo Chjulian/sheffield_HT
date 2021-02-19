@@ -140,6 +140,7 @@ summary.res <- function(res=res, burnin=1000, support=0){
         mydf$tree$from <- as.vector(dictionary.tree[mydf$tree$from])
         mydf$tree$to <- as.vector(dictionary.tree[mydf$tree$to])
         tree <- mydf$tree
+        
         # table(data$D[as.matrix(tree[c("from", "to")])], useNA = 'always')
         min.date.i<- which(tree$time==min(tree$time))
         if(length(min.date.i)>1) min.date.i<- min.date.i[1]
@@ -387,4 +388,54 @@ add_convolutions <- function(data, config) {
                 names(data$log_a_dens) <- 1:config$max_kappa
         }
         return(data)
+}
+
+
+## function which returns individual summaries of each MCMC
+summary.all.steps <- function(res, burnin){
+        burnt_res <- res[res$step>burnin,]
+        lapply(
+                seq_len(length(burnt_res$step)),
+                function(i) {
+                        out_df <- summary.res(res=burnt_res[i,], burnin=0, support=0)
+                        out_df$step <- burnt_res[i,"step"]
+                        return(out_df)
+                }
+        ) %>% bind_rows()
+}
+
+## outputs final outcome summary. Input is from summary.all.steps
+get_outcome_distibutions <- function(all_summary){
+        
+        out_distributions <- lapply(
+                unique(all_summary$step),
+                function(i) {
+                        step_df <- all_summary[all_summary$step==i,]
+                        step_s_s <- sum(step_df$staff_to_staff)
+                        step_i_i <- sum(step_df$inpatient_to_inpatient)
+                        step_s_i <- sum(step_df$staff_to_inpatient)
+                        step_i_s <- sum(step_df$inpatient_to_staff)
+                        step_total_pairs <- sum(step_s_s, step_i_i, step_s_i, step_i_s)
+                        total_clusters <- length(step_df$id)
+                        index.cat.table <- table(step_df$index.category)
+                        index.assoc.table <- table(step_df$index.association)
+                        
+                        loop_tibble <- tibble(
+                                step=i,
+                                staff.to.staff = step_s_s/step_total_pairs,
+                                inpatient.to.inpatient = step_i_i/step_total_pairs,
+                                staff.to.inpatient = step_s_i/step_total_pairs,
+                                inpatient.to.staff = step_i_s/step_total_pairs,
+                                staff.index.prop = index.cat.table["staff"]/total_clusters,
+                                inpatient.index.prop = index.cat.table["inpatient"]/total_clusters,
+                                com.onset.com.assoc.index.prop = index.assoc.table["community_onset_community_associated"]/total_clusters,
+                                com.onset.health.assoc.index.prop = index.assoc.table["community_onset_suspected_healthcare_associated"]/total_clusters,
+                                hosp.onset.health.indeterminate.index.prop = index.assoc.table["hospital_onset_indetermite_healthcare_associated"]/total_clusters,
+                                hosp.onset.health.assoc.index.prop = index.assoc.table["hospital_onset_suspected_healthcare_associated"]/total_clusters,
+                                total_clusters = total_clusters
+                        )
+                        return(loop_tibble)
+                } 
+        ) %>% bind_rows()
+        return(out_distributions)
 }
