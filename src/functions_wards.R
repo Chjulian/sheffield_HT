@@ -439,3 +439,24 @@ get_outcome_distibutions <- function(all_summary){
         ) %>% bind_rows()
         return(out_distributions)
 }
+
+#Mget all MCMC steps as pairs but don't exclude imports
+get_steps <- function(res, data) {
+        out_df <- lapply(
+                seq_len(sum(grepl("alpha", names(res)))),
+                function(i) {
+                        tibble(
+                                from = res[[glue("alpha_{i}")]],
+                                to = i,
+                                t_inf = res[[glue("t_inf_{i}")]],
+                                t_onw = res[[glue("t_onw_{i}")]],
+                                kappa = res[[glue("kappa_{i}")]],
+                                ward_from = mapply(get_ward, from, ifelse(is.na(kappa) | kappa == 1, t_inf, t_onw), MoreArgs = list(data = data)),
+                                ward_to = mapply(get_ward, to, t_inf, MoreArgs = list(data = data)),
+                                dist = data$D[cbind(from, to)]
+                        )
+                }
+        ) %>% bind_rows() 
+        out_df$step <- rep(res$step, sum(grepl("alpha", names(res))))
+        return(out_df)
+}
