@@ -34,6 +34,29 @@ mydata <- mydata[mydata$loc1%!in%c('com'),] #rm community associated
 mydata <- mydata[!is.na(mydata$dateofonset_foranalysis),]
 
 #################################
+#Consolidate ward data
+#################################
+wards.patients<- read.csv("data/patient-ward-movements-20210207.csv")
+wards.patients<- wards.patients[,c('Barcode','Ward','In','Out')]
+names(wards.patients) <- c('id','ward','adm','dis') #rename as examples files for consistency
+wards<- ward_occupation(wards.patients=wards.patients)
+#set nncl and multiple as NA
+wards$ward[wards$ward%in%c('nncl','multiple')] <- NA 
+
+#################################
+#remove barcodes with missing location data
+#################################
+barcodes.with.movements <- unique(wards$id[!is.na(wards$ward)])
+wards <- wards[wards$id %in% barcodes.with.movements,]
+mydata <- mydata[mydata$barcode %in% barcodes.with.movements,]
+
+#################################
+#process onset dates
+#################################
+date_onset<- mydata$dateofonset_foranalysis
+names(date_onset) <- rep("local", length(date_onset)) 
+
+#################################
 #load dna data in DNAbin format, 
 #################################
 #one sequence per individual
@@ -44,22 +67,6 @@ dna <- dna[mydata$barcode]; mylabels <- names(dna)
 write.FASTA(dna, "data/hoci_phylo-2021-02-07_error-removed_masked.ord.aln")
 dna.SNP <- import_fasta_sparse("data/hoci_phylo-2021-02-07_error-removed_masked.ord.aln") %>% snp_dist(.)
 rownames(dna.SNP) <- colnames(dna.SNP) <- mylabels; rm(mylabels)
-
-#################################
-#process onset dates
-#################################
-date_onset<- mydata$dateofonset_foranalysis
-names(date_onset) <- rep("local", length(date_onset)) 
-
-#################################
-#Consolidate ward data
-#################################
-wards.patients<- read.csv("data/patient-ward-movements-20210207.csv")
-wards.patients<- wards.patients[,c('Barcode','Ward','In','Out')]
-names(wards.patients) <- c('id','ward','adm','dis') #rename as examples files for consistency
-wards<- ward_occupation(wards.patients=wards.patients)
-#set nncl and multiple as NA
-wards$ward[wards$ward%in%c('nncl','multiple')] <- NA 
 
 #################################
 #set incubation_period: a vector indexed at day = 1 
@@ -122,7 +129,7 @@ config <- create_config(
         ## define iterations and sampling (this is a short exploratory run)
         n_iter = 1e4, sample_every = 50,
         ## prior on the rate
-        move_mu = TRUE, init_mu = 0.1,
+        move_mu = TRUE, init_mu = 0.1, sd_mu = 0.01,
         ## prior on the reporting probability pi
         move_pi = TRUE, prior_pi = c(30, 10), init_pi=0.75,
         ## eps is the probability of infections occuring between cases registered on the same ward
