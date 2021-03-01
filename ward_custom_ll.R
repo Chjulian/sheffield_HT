@@ -1,20 +1,20 @@
 #   /.)
-#  /)\|   
-# // /     
-# /'" " 
+#  /)\|
+# // /
+# /'" "
 #################################
 #Outbreaker2 for ward studies
 #################################
 
 #################################
-#Load libraries and functions 
+#Load libraries and functions
 #################################
 if(!require(pacman)) install.packages(pacman)
 pacman::p_load(ape, linelist, epitrix, fitdistrplus,
-               outbreaker2, tidyverse, rio, 
-               magrittr, remotes, epicontacts, 
+               outbreaker2, tidyverse, rio,
+               magrittr, remotes, epicontacts,
                visNetwork, lubridate, pairsnp,
-               ggplot2, chron,glue) 
+               ggplot2, chron,glue)
 source("src/functions_wards.R")
 source("src/functions.R")
 source("src/onset_distribution.R")
@@ -41,7 +41,7 @@ wards.patients<- wards.patients[,c('Barcode','Ward','In','Out')]
 names(wards.patients) <- c('id','ward','adm','dis') #rename as examples files for consistency
 wards<- ward_occupation(wards.patients=wards.patients)
 #set nncl and multiple as NA
-wards$ward[wards$ward%in%c('nncl','multiple')] <- NA 
+wards$ward[wards$ward%in%c('nncl','multiple')] <- NA
 
 #################################
 #remove barcodes with missing location data
@@ -54,10 +54,10 @@ mydata <- mydata[mydata$barcode %in% barcodes.with.movements,]
 #process onset dates
 #################################
 date_onset<- mydata$dateofonset_foranalysis
-names(date_onset) <- rep("local", length(date_onset)) 
+names(date_onset) <- rep("local", length(date_onset))
 
 #################################
-#load dna data in DNAbin format, 
+#load dna data in DNAbin format,
 #################################
 #one sequence per individual
 dna <- read.FASTA("data/hoci_phylo-2021-02-07_error-removed_masked.aln")
@@ -69,7 +69,7 @@ dna.SNP <- import_fasta_sparse("data/hoci_phylo-2021-02-07_error-removed_masked.
 rownames(dna.SNP) <- colnames(dna.SNP) <- mylabels; rm(mylabels)
 
 #################################
-#set incubation_period: a vector indexed at day = 1 
+#set incubation_period: a vector indexed at day = 1
 #################################
 n <- rlnorm(10000, meanlog = 1.621, sdlog = 0.418)
 fit.gamma <- fitdist(n, distr = "gamma", method = "mle")
@@ -81,7 +81,7 @@ incubation_period <- distcrete::distcrete("gamma",
 rm(n,fit.gamma)
 
 #################################
-#set generation_time: a vector indexed at day = 1 
+#set generation_time: a vector indexed at day = 1
 #################################
 # build discretized gamma
 generation_time <- distcrete::distcrete("gamma",
@@ -108,7 +108,7 @@ rm(unq,n)
 #create meta object
 meta <- mydata[,c("barcode","dateofonset_foranalysis")]
 names(meta) <- c("id", "date_onset")
-row.names(meta) <- NULL 
+row.names(meta) <- NULL
 
 #################################
 #set outbreaker run
@@ -176,7 +176,8 @@ config <- get_initial_tree(
   priors = priors,
   likelihoods = likelihoods,
   n_iter = 1e3,
-  max_dist = 2
+  max_dist = 2,
+  days_after_admission = 2
 )
 # table(data$D[cbind(seq_along(config$init_alpha), config$init_alpha)],useNA = 'always')
 
@@ -196,7 +197,7 @@ tChains.df <- summary.res(res=res, burnin=1000, support=0)
 #################################
 
 myRDS <- list('raw'=mydata, 'wards'=wards,
-              'data'=data, 'config'=config , 'res'=res, 
+              'data'=data, 'config'=config , 'res'=res,
               'res.sum'= mydf,
               'cons_tree'=cons_tree,
               'clusters'=myclusters,
