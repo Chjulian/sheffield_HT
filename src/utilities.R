@@ -76,15 +76,28 @@ df <- tpairs %>%
         group_by(pair) %>%
         summarise(
                 'n' = n(),
-                'p' = n()/151,
+                'p' = n()/nrow(res),
                 'n.t_inf'=length(unique(t_inf)),
                 'n.kappa'=length(unique(kappa)),
                 'n.ward_from'=length(unique(ward_from)),
                 'n.ward_to'=length(unique(ward_to)),
                 'n.dist'=length(unique(dist)),
-                'ward_from'= as.integer(names(sort(table(ward_from), decreasing = TRUE)[1])),
-                'ward_to'= as.integer(names(sort(table(ward_to), decreasing = TRUE)[1]))
+                'ward_from'= as.numeric(names(sort(table(ward_from), decreasing = TRUE)[1])),
+                'ward_to'= as.numeric(names(sort(table(ward_to), decreasing = TRUE)[1]))
                 )
+df
+
+myseq <- seq(0, 1, 0.01)
+sameWard <- numeric()
+for(i in myseq){
+        df.t<- df[df$p>=i,]
+        sameWard<- c(sameWard, round(as.numeric(table(df.t$ward_from==df.t$ward_to)[2])*100/nrow(df.t),2))
+}; rm(i,df.t)
+df.t <- data.frame('p'=myseq,'sameWard'=sameWard)
+ggplot(df.t)+geom_point(aes(x=p, y=sameWard)) + theme_minimal() +
+        ylab('% of pairs in same ward') + ylab('pp of linkage in outbreaker') +
+        ylim(0,100); rm(df.t, myseq, sameWard)
+
 
 #summary of category by mcmc step
 df.cat <- tpairs %>%
