@@ -1,6 +1,12 @@
 ## Identify a starting tree with the fewest number of 'imports' as given by the
 ## timed contact data
-get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
+get_initial_tree <- function(data, config,
+                             priors = custom_priors(),
+                             likelihoods = custom_likelihoods(),
+                             n_iter = 5e3,
+                             max_dist = 5,
+                             days_after_admission = 0,
+                             scale = 1) {
 
   ## set up config to only look for direct ward contacts
   tmp_config <- create_config(
@@ -20,7 +26,7 @@ get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
 
   ## do first run
   cat("Finding direct ward contacts...\n")
-  first_run <- outbreaker(data, tmp_config)
+  first_run <- outbreaker(data, tmp_config, priors = priors, likelihoods = likelihoods)
 
   ## get false negatives
   fn <- get_ward_fn(first_run)
@@ -46,7 +52,7 @@ get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
   tmp_config[c("move_kappa", "move_alpha", "find_import", "move_tau", "swap_place")] <- FALSE
   tmp_config$move_joint <- tmp_config$move_model <- TRUE
   data$swap_place <- FALSE
-  tmp_config$sd_t_onw <- 30
+  tmp_config$sd_t_onw <- 30*scale
 
   ## edge cases if tau or eps is 1
   tmp_config$init_pi <- 0.5
@@ -65,12 +71,23 @@ get_initial_tree <- function(data, config, n_iter = 5e3, max_dist = 5) {
 
   ## second run
   cat("Finding indirect ward contacts...\n")
-  sec_run <- outbreaker(data, tmp_config)
+  sec_run <- outbreaker(data, tmp_config, priors = priors, likelihoods = likelihoods)
   if(config$init_eps == 1) sec_run$eps <- 1
   if(config$init_tau == 1) sec_run$tau <- 1
 
   ## get remaining false negatives
   fn <- get_ward_fn(sec_run) == 1
+
+  ## cases with onset < x days after admission are also labelled as imports
+  after_admission <- data$ctd_timed %>%
+    group_by(id) %>%
+    summarise(adm = min(adm)) %>%
+    left_join(tibble(id = data$ids, onset = data$dates), ., "id") %>%
+    ## if ward data is missing, set as import
+    mutate(import = replace_na(onset - adm <= days_after_admission*scale, TRUE))
+
+  ## set as imports
+  fn[after_admission$import] <- TRUE
 
   ## carry over ancestries, infection times and kappa
   n <- nrow(sec_run)
