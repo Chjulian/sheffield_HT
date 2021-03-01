@@ -89,16 +89,28 @@ df
 
 myseq <- seq(0, 1, 0.01)
 sameWard <- numeric()
+UniquePairs <- numeric()
 for(i in myseq){
         df.t<- df[df$p>=i,]
         sameWard<- c(sameWard, round(as.numeric(table(df.t$ward_from==df.t$ward_to)[2])*100/nrow(df.t),2))
+        UniquePairs <- c(UniquePairs, nrow(df.t))
 }; rm(i,df.t)
-df.t <- data.frame('p'=myseq,'sameWard'=sameWard)
-ggplot(df.t)+geom_point(aes(x=p, y=sameWard)) + theme_minimal() +
-        ylab('% of pairs in same ward') + ylab('pp of linkage in outbreaker') +
-        ylim(0,100); rm(df.t, myseq, sameWard)
 
+df.t <- data.frame('p'=myseq,'sameWard'=sameWard, 'UniquePairs'=UniquePairs)
 
+require(RColorBrewer)
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+sc <- scale_colour_gradientn(colours = myPalette(100), limits=c(1, max(df.t$UniquePairs)))
+
+p1<-ggplot(df.t)+geom_point(aes(x=p, y=sameWard, color=UniquePairs)) + theme_minimal() +
+        ylab('% linked pairs--same ward') + xlab('pp of linkage in outbreaker') +
+        ylim(0,100) + sc
+
+p2<-ggplot(df.t[df.t$p>0.25,])+geom_point(aes(x=p, y=UniquePairs, color=UniquePairs)) + theme_minimal() +
+        ylab('# linked pairs') + xlab('pp of linkage in outbreaker') + xlim(0,1) +
+        sc
+ggpubr::ggarrange(p1,p2, ncol = 1, common.legend = T, legend = c('right'))
+        
 #summary of category by mcmc step
 df.cat <- tpairs %>%
         group_by(step) %>% 
