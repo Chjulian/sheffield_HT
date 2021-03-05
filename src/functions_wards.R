@@ -47,6 +47,9 @@ ward_occupation <- function(wards.patients=wards.patients){
         wards.patients<- wards.patients[wards.patients$id%in%unique(mydata$barcode),]
         
         wards <- rbind(wards.staff, wards.patients)
+        wards$adm <- as.POSIXct(wards$adm)
+        wards$dis <- as.POSIXct(wards$dis)
+        
         
         mydata <<- mydata
         return(wards)

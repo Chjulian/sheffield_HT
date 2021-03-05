@@ -138,7 +138,7 @@ config <- create_config(
 #################################
 ## Identify initial tree (run this for now, it will identify a possible starting point)
 #from time to time it fails but usually work after first try
-config <- get_initial_tree(data, config, n_iter = 5e3, max_dist = max_dist)
+config <- get_initial_tree(data, config, n_iter = 5e3, max_dist = max_dist, scale=6)
 # table(data$D[cbind(seq_along(config$init_alpha), config$init_alpha)],useNA = 'always')
 
 #################################
