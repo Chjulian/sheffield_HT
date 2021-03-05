@@ -1,3 +1,8 @@
+#remotes::install_github("finlaycampbell/outbreaker2@updated_hosp")
+#################################
+#get links from the mcmc, plot pp, check ward consistency [Feb 2021]
+#################################
+
 pacman::p_load(ape, linelist, epitrix, fitdistrplus,
                outbreaker2, tidyverse, rio, 
                magrittr, remotes, epicontacts, 
@@ -28,9 +33,6 @@ get_tpairs.2 <- function(res, data) {
                 drop_na(from)
 }
 
-
-
-
 ## get data
 data <- d$data
 config <- d$config
@@ -42,7 +44,6 @@ raw <- d$raw
 dic.id <- setNames(data$ids, 1:length(data$ids)) 
 dic.ward <- setNames(unique(data$ctd_timed$ward), 1:length(unique(data$ctd_timed$ward))) 
 dic.cat <- setNames(raw$category, raw$barcode) 
-
 
 
 ## check proper burning by vis
@@ -84,7 +85,7 @@ df <- tpairs %>%
                 'n.dist'=length(unique(dist)),
                 'ward_from'= as.numeric(names(sort(table(ward_from), decreasing = TRUE)[1])),
                 'ward_to'= as.numeric(names(sort(table(ward_to), decreasing = TRUE)[1]))
-                )
+        )
 df
 
 myseq <- seq(0, 1, 0.01)
@@ -110,7 +111,7 @@ p2<-ggplot(df.t[df.t$p>0.25,])+geom_point(aes(x=p, y=UniquePairs, color=UniquePa
         ylab('# linked pairs') + xlab('pp of linkage in outbreaker') + xlim(0,1) +
         sc
 ggpubr::ggarrange(p1,p2, ncol = 1, common.legend = T, legend = c('right'))
-        
+
 #summary of category by mcmc step
 df.cat <- tpairs %>%
         group_by(step) %>% 
@@ -119,7 +120,7 @@ df.cat <- tpairs %>%
                 'inpatient_staff' = sum(pair.cat=='inpatient_staff'),
                 'staff_inpatient' = sum(pair.cat=='staff_inpatient'),
                 'staff_staff' = sum(pair.cat=='staff_staff') 
-                ) %>%
+        ) %>%
         mutate('total' = select(., 2:5) %>% rowSums(na.rm = TRUE)) %>%
         mutate('inpatient_inpatient%'=inpatient_inpatient*100/total,
                'inpatient_staff%'=inpatient_staff*100/total,
@@ -128,11 +129,10 @@ df.cat <- tpairs %>%
 
 df.cat.long <- df.cat %>%
         select('inpatient_inpatient%', 'inpatient_staff%',
-                'staff_inpatient%', 'staff_staff%') %>%
+               'staff_inpatient%', 'staff_staff%') %>%
         pivot_longer(cols = c('inpatient_inpatient%', 'inpatient_staff%',
-                                             'staff_inpatient%', 'staff_staff%'))
+                              'staff_inpatient%', 'staff_staff%'))
 
 require(ggplot2)
 ggplot(df.cat.long) + geom_boxplot(aes(x=name, y=value, color=name)) + 
         theme_minimal()
-

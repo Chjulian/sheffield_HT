@@ -895,10 +895,24 @@ update_par <- function(param, i, res, data, config) {
   param$t_onw[is.na(param$t_onw)] <- -1000
   param$kappa[is.na(param$kappa)] <- 1
 
-#  param$trans_mat <- update_trans(data, param, config)
+  param <- update_trans(data, param, config)
 
   return(param)
 
+}
+
+## Update transition matrices
+update_trans <- function(data, param, config) {
+  for(i in seq_along(param$trans_mat)) {
+    param$trans_mat[[i]] <- get_transition_mat(data$pp_trans_adj[[i]],
+                                               data$pp_place[[i]],
+                                               data$pp_place_adj[[i]],
+                                               param$eps[i],
+                                               param$tau[i],
+                                               data$N_place_unobserved[i],
+                                               config$max_kappa)
+  }
+  return(param)
 }
 
 ## get minimum genetic distance across all posterior draws
@@ -1002,4 +1016,165 @@ get_beta_par <- function(mu, sd = NULL, cv = NULL) {
   alpha <- ((1 - mu) / var - 1 / mu) * mu ^ 2
   beta <- alpha * (1 / mu - 1)
   return(c(alpha, beta))
+}
+
+## check if there is any overlap between wards stays
+get_overlap <- function(start, end) {
+  map_lgl(
+    seq_along(start),
+    function(i) any(start[i] > end[-i] & start[-i] > end[i])
+  )
+}
+
+## scale dates up (i.e. expand) or down (i.e. contract) by a factor fiven by scale
+scale_ward_dates <- function(ward, origin, to = c("up", "down"), scale = 6) {
+  to <- match.arg(to)
+  if(to == "up") {
+    mutate(
+      ward,
+      across(
+        c(start, end),
+        ~ (as.numeric(.x) - as.numeric(origin)) %>%
+          `*`(scale) %>%
+          as.POSIXct(origin = origin, tz = "GMT") %>%
+          floor_date("day") %>%
+          as.Date()
+      )
+    ) %>%
+      group_by(id, start) %>%
+      ## this will shuffle dates by +/- days so we capture all wards
+      do(correct_dates(.)) %>%
+      ## as this works recursively we have do it multiple times - twice seems to
+      ## be enough to ensure dates are shuffled enough to capture all ward stays
+      do(correct_dates(.)) %>%
+      ungroup()
+  } else {
+    mutate(
+      ward,
+      across(
+        c(start, end),
+        ~ as.POSIXct(with_tz(.x, "GMT")) %>%
+          {as.numeric(.) - as.numeric(origin)} %>%
+          `/`(scale) %>%
+          as.POSIXct(origin = origin, tz = "GMT")
+      )
+    )
+  }
+}
+
+## scale dates up (i.e. expand) or down (i.e. contract) by a factor fiven by scale
+scale_onset_dates <- function(onset, origin, to = c("up", "down"), scale = 6) {
+  to <- match.arg(to)
+  if(to == "up") {
+    as.POSIXct(with_tz(onset, "GMT"), format = "%Y-%m-%d %H:%M:%S", tz = "GMT") %>%
+    {as.numeric(.) - as.numeric(origin)} %>%
+      `*`(scale) %>%
+      as.POSIXct(origin = origin, tz = "GMT") %>%
+      floor_date("day") %>%
+      as.Date()
+  } else {
+    as.POSIXct(with_tz(onset, "GMT")) %>%
+      {as.numeric(.) - as.numeric(origin)} %>%
+      `/`(scale) %>%
+      as.POSIXct(origin = origin, tz = "GMT")
+  }
+}
+
+## shuffle dates so that all ward event can be captured
+correct_dates <- function(df) {
+  if(nrow(df) > 1) {
+    df %<>% arrange(end)
+    ## this is the event happening only on that "day"
+    single <- df$start - df$end == 0
+    if(sum(single) > 1)
+      warning(paste0("resolution is too small to include all data points; ",
+              "if you see many of these warnings, increase the scale"))
+    for(i in which(!single)) {
+      ## if before
+      if(i < which(single)[1]) df$end[i] <- df$end[i] - 1
+      if(i > which(single)[1]) df$start[i] <- df$start[i] + 1
+    }
+  }
+  return(df)
+}
+
+## rescale distributions
+scale_distribution <- function(density, scale = 6) rep(density/scale, each = scale)
+
+## calculate the individual likelihood for all cases for a given step in the MCMC
+get_step_likelihood <- function(step, res, data, param, config, likelihoods) {
+  param <- update_par(param, step, res, data, config)
+  ll <- map_dbl(seq_along(data$dates), ~ cpp_ll_all(data, param, .x, likelihoods))
+  ## we don't calculate likelihoods for imports as they are only calculated on
+  ## onset dates and aren't comparable with other likelihoods
+  ll[is.na(param$alpha)] <- NA
+  return(ll)
+}
+
+## calculate the average likelihood across the entire run
+get_average_likelihood <- function(res, data, param, config, likelihoods, burnin = 1000) {
+
+  map_dfc(
+    which(res$step > burnin),
+    get_step_likelihood,
+    res, data, param, config, likelihoods
+  ) %>%
+    apply(1, mean, na.rm = TRUE)
+
+}
+
+## assign imports according the import probability and the case
+## likelihoods. n_chains specifies how many different outbreaker chains you want
+## to run with different imports draws.
+assign_imports <- function(n_chains, p_import_mu, p_import_sd, res, ll, config) {
+
+  ## these are fixed as imports from the previous run
+  prop_fixed <- mean(is.na(config$init_tree))
+
+  ## check that p_import_mu is high enough
+  if(p_import_mu < prop_fixed) {
+    stop(paste0("p_import_mu is lower than the minimum necessary number of imports",
+                " given the ward data and onset dates"))
+  }
+
+  ## get beta prior values for our import probability - we need to calculate the
+  ## probability for the unfixed imports in a manner that ensure unfixed + fixed
+  ## = p_import_mu
+  par <- get_beta_par((p_import_mu - prop_fixed)/(1 - prop_fixed), p_import_sd)
+
+  ## draw import probabilities
+  p_import <- rbeta(n_chains, par[1], par[2])
+
+  ## draw non-fixed import numbers
+  n_import <- map_dbl(p_import, ~ rbinom(1, length(ll) - sum(is.na(config$init_tree)), .x))
+
+  ## cases that are not fixed as imports
+  unfixed <- !is.na(config$init_tree)
+
+  ## draw import indices from unfixed (with 1/ll as the probability of being an import)
+  imports <- map(n_import, ~ sample(which(unfixed), .x, FALSE, exp(-ll[unfixed])))
+
+  ## set last tree of res as first tree in config
+  param <- update_par(create_param()$current, nrow(res), res, data, config)
+
+  ## assign
+  config$init_tree <- config$init_alpha <- param$alpha
+  config$init_t_inf <- param$t_inf
+  config$init_t_onw <- param$t_onw
+  config$init_kappa <- param$kappa
+  config$init_pi <- param$pi
+  config$init_mu <- param$mu
+  config$init_eps <- param$eps
+  config$init_tau <- param$tau
+
+  ## assign these indices as imports and return
+  map(imports, ~ modify_in(config, "init_tree", modify_at, .x, ~ NA))
+
+}
+
+## run outbreaker with a given config and save as run_i
+run_and_save <- function(config, i, data, priors, likelihoods) {
+  res <- outbreaker(data, config, priors = priors, likelihoods = likelihoods)
+  export(res, here(glue("outputs/run_{i}.rds")))
+  return(res)
 }

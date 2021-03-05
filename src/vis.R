@@ -97,3 +97,4 @@ summary(as.vector(table(staff.tree$from)))
 #wards
 sort(table(c(d$cons_tree$contacts$ward.to, d$cons_tree$contacts$ward.from)), decreasing = T)
 
+

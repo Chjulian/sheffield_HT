@@ -30,6 +30,58 @@ ward_occupation <- function(wards.patients=wards.patients){
                 }
         }; rm(i)
         wards.staff <- mydata[mydata$category=='staff',c('barcode','ward','dateofcollection')]
+        
+        wards.staff <- clean_data(wards.staff, guess_dates = c(3))
+        names(wards.staff)<-c('id','ward','adm')
+        wards.staff$dis <- wards.staff$adm
+        wards.staff$adm <- wards.staff$adm-14
+        wards.staff$dis <- paste(wards.staff$dis, "12:00:00")
+        wards.staff$adm <- paste(wards.staff$adm, "12:00:00")
+        
+        wards.patients.adm <-wards.patients$adm
+        wards.patients.dis <- wards.patients$dis
+        
+        wards.patients<- clean_data(wards.patients, guess_dates = c(3,4))
+        wards.patients$adm <- wards.patients.adm
+        wards.patients$dis <- wards.patients.dis
+        wards.patients<- wards.patients[wards.patients$id%in%unique(mydata$barcode),]
+        
+        wards <- rbind(wards.staff, wards.patients)
+        
+        mydata <<- mydata
+        return(wards)
+}
+
+
+ward_occupation.old <- function(wards.patients=wards.patients){
+        #create wards object for staff
+        mydata$wards <- mydata$ward <- paste(mydata$loc1, mydata$loc2,
+                                             mydata$loc3, mydata$loc4,
+                                             mydata$loc5, mydata$loc6,
+                                             mydata$loc7, mydata$loc8)
+        mydata$ward.count <- as.integer(sapply(mydata$ward, function(rw) length(strsplit(trimws(rw)," ")[[1]])))
+        mydata$ward <- trimws(mydata$ward)
+        staff.i <- which(mydata$category=='staff')
+        for(i in 1:nrow(mydata)){
+                if(mydata$ward.count[i]==0){
+                        mydata$ward[i] <- NA
+                } else {
+                        if(i %in% staff.i){ #if staff
+                                if(mydata$ward.count[i]==1){ #if one entry in ward occupation
+                                        mydata$ward[i] <- ifelse(mydata$loc1[i]=='multiple', 'multiple', mydata$ward[i])
+                                } else{ #multiples entries in ward occupation
+                                        occupation <- unlist(strsplit(str_replace_all(mydata$ward[i], "multiple", ""), " "))
+                                        cap<- ifelse(length(occupation)<3, length(occupation), 3)
+                                        occupation <- occupation[1:cap]
+                                        mydata$ward[i] <- sample(occupation,1)
+                                }
+                                
+                        } else mydata$ward[i] <- ifelse(mydata$ward.count[i]>1 | mydata$loc1[i]=='multiple', 'multiple', mydata$ward[i])
+                        
+                        
+                }
+        }; rm(i)
+        wards.staff <- mydata[mydata$category=='staff',c('barcode','ward','dateofcollection')]
         wards.staff <- clean_data(wards.staff, guess_dates = c(3))
         names(wards.staff)<-c('id','ward','adm')
         wards.staff$dis <- wards.staff$adm
@@ -41,7 +93,6 @@ ward_occupation <- function(wards.patients=wards.patients){
         
         admP <- as.POSIXct(wards.patients$adm)
         disP <- as.POSIXct(wards.patients$dis)
-        wards.patients<- clean_data(wards.patients, guess_dates = c(3,4))
         wards.patients<- clean_data(wards.patients, guess_dates = c(3,4))
         wards.patients<- wards.patients[wards.patients$id%in%unique(mydata$barcode),]
         wards.patients$admP <- admP
