@@ -52,7 +52,7 @@ ward_occupation <- function(wards.patients=wards.patients){
         
         
         mydata <<- mydata
-        return(wards)
+        return(as.data.frame(wards))
 }
 
 
