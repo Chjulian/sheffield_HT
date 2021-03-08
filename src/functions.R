@@ -1,5 +1,6 @@
 ## Identify a starting tree with the fewest number of 'imports' as given by the
 ## timed contact data
+
 get_initial_tree <- function(data, config,
                              priors = custom_priors(),
                              likelihoods = custom_likelihoods(),

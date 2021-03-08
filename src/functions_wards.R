@@ -29,12 +29,14 @@ ward_occupation <- function(wards.patients=wards.patients){
                         
                 }
         }; rm(i)
-        wards.staff <- mydata[mydata$category=='staff',c('barcode','ward','dateofcollection')]
+        wards.staff <- mydata[mydata$category=='staff',c('barcode','ward','dateofcollection', 'dateofonset_foranalysis')]
         
-        wards.staff <- clean_data(wards.staff, guess_dates = c(3))
-        names(wards.staff)<-c('id','ward','adm')
-        wards.staff$dis <- wards.staff$adm
-        wards.staff$adm <- wards.staff$adm-14
+        wards.staff <- clean_data(wards.staff, guess_dates = c(3,4))
+        wards.staff$adm <- wards.staff$dateofonset_foranalysis-14
+        wards.staff$dis <- wards.staff$dateofcollection-1
+        wards.staff$dateofcollection <- NULL
+        wards.staff$dateofonset_foranalysis <- NULL
+        names(wards.staff)<-c('id','ward','adm', 'dis')
         wards.staff$dis <- paste(wards.staff$dis, "12:00:00")
         wards.staff$adm <- paste(wards.staff$adm, "12:00:00")
         
