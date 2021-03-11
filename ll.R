@@ -208,6 +208,9 @@ pre_run <- outbreaker(data, config, priors = priors, likelihoods = likelihoods)
 ## make empty param
 param <- create_param(data)$current
 
+## we need this step for the likelihood calculations
+data %<>% outbreaker2:::add_convolutions(config)
+
 ## get the average likelihood per case (make sure to set the correct burnin)
 ll <- get_average_likelihood(pre_run, data, param, config, likelihoods, burnin = 500)
 

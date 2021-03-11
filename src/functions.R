@@ -905,13 +905,15 @@ update_par <- function(param, i, res, data, config) {
 ## Update transition matrices
 update_trans <- function(data, param, config) {
   for(i in seq_along(param$trans_mat)) {
-    param$trans_mat[[i]] <- get_transition_mat(data$pp_trans_adj[[i]],
-                                               data$pp_place[[i]],
-                                               data$pp_place_adj[[i]],
-                                               param$eps[i],
-                                               param$tau[i],
-                                               data$N_place_unobserved[i],
-                                               config$max_kappa)
+    param$trans_mat[[i]] <- outbreaker2:::get_transition_mat(
+      data$pp_trans_adj[[i]],
+      data$pp_place[[i]],
+      data$pp_place_adj[[i]],
+      param$eps[i],
+      param$tau[i],
+      data$N_place_unobserved[i],
+      config$max_kappa
+    )
   }
   return(param)
 }
@@ -1105,7 +1107,7 @@ scale_distribution <- function(density, scale = 6) rep(density/scale, each = sca
 ## calculate the individual likelihood for all cases for a given step in the MCMC
 get_step_likelihood <- function(step, res, data, param, config, likelihoods) {
   param <- update_par(param, step, res, data, config)
-  ll <- map_dbl(seq_along(data$dates), ~ cpp_ll_all(data, param, .x, likelihoods))
+  ll <- map_dbl(seq_along(data$dates), ~ outbreaker2:::cpp_ll_all(data, param, .x, likelihoods))
   ## we don't calculate likelihoods for imports as they are only calculated on
   ## onset dates and aren't comparable with other likelihoods
   ll[is.na(param$alpha)] <- NA
@@ -1115,7 +1117,7 @@ get_step_likelihood <- function(step, res, data, param, config, likelihoods) {
 ## calculate the average likelihood across the entire run
 get_average_likelihood <- function(res, data, param, config, likelihoods, burnin = 1000) {
 
-  map_dfc(
+map_dfc(
     which(res$step > burnin),
     get_step_likelihood,
     res, data, param, config, likelihoods
