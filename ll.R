@@ -4,7 +4,7 @@ pacman::p_load(ape, linelist, epitrix, fitdistrplus,
                outbreaker2, tidyverse, rio,
                magrittr, remotes, epicontacts,
                visNetwork, lubridate, pairsnp,
-               ggplot2, chron,glue)
+               ggplot2, chron, glue, here)
 source("src/functions_wards.R")
 source("src/functions.R")
 source("src/onset_distribution.R")
@@ -223,7 +223,7 @@ data %<>% outbreaker2:::add_convolutions(config)
 ll <- get_average_likelihood(pre_run, data, param, config, likelihoods, burnin = 500)
 
 ## assign imports for 100 runs with an 60% import probability
-configs <- assign_imports(n_chains = 10, p_import_mu = 0.6, p_import_sd = 0.1, res, ll, config)
+configs <- assign_imports(n_chains = 10, p_import_mu = 0.6, p_import_sd = 0.1, pre_run, ll, config)
 
 ## run and save outbreaker (in outputs folder) and return as list
 results <- imap(configs, run_and_save, data, priors, likelihoods)
