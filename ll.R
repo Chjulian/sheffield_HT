@@ -88,6 +88,9 @@ wards_unscaled <- scale_ward_dates(wards_scaled, origin, to = "down", scale = sc
 scaled_date_onset <- date_onset %>%
   scale_onset_dates(origin, scale = scale)
 
+##add naems back in
+names(scaled_date_onset) <- rep("local", length(scaled_date_onset))
+wards_scaled <- wards_scaled %>% rename(adm =  start, dis = end)
 
 #################################
 #set incubation_period: a vector indexed at day = 1
@@ -132,7 +135,12 @@ diag(transition) <- 0
 transition <- t(apply(transition, 1, function(x) x/sum(x)))
 rm(unq,n)
 
+#create meta object
+meta <- mydata[,c("barcode","dateofonset_foranalysis")]
+names(meta) <- c("id", "date_onset")
+row.names(meta) <- NULL
 
+                      
 #################################
 #set outbreaker run
 #################################
@@ -140,7 +148,7 @@ data <- outbreaker_data(
   dates = scaled_date_onset,
   dna = dna,
   ctd_timed = wards_scaled,
-  ids = rownames(dna),
+  ids = meta$id,
   w_dens = w_dens_scaled,
   f_dens = f_dens_scaled,
   p_trans = list(transition)
