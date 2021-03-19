@@ -9,17 +9,16 @@ file_name <- "dataset_imputed_2020-12-08.csv"
 data <- data.table::fread(file_name)
 message("Using ", file_name, " as input")
 
-# incubation period as Weibull
-
-dist_setup <- function(dist_shape = NULL, dist_scale = NULL) {
-  out <- purrr::partial(pweibull,
-                        shape = dist_shape,
-                        scale = dist_scale)
+# incubation period as Lognormal
+dist_setup <- function(dist_mean = NULL, dist_sd = NULL) {
+  out <- purrr::partial(plnorm,
+                        meanlog = dist_mean,
+                        sdlog = dist_sd)
   return(out)
 }
 
-incubation_fn <- dist_setup(dist_shape = 2.322737,
-                    dist_scale = 6.492272)
+incubation_fn <- dist_setup(dist_mean = 1.621,
+                    dist_sd = 0.418)
 
 # grab the inpatients only (as outpatients and staff are not subject to HOCI criteria)
 # then: calculate prob that exposure occurred before hospital admission using pre-assigned distribution
