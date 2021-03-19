@@ -34,7 +34,7 @@ mydata <- mydata[mydata$category%in%c('inpatient', 'outpatient','staff'),]
 mydata <- mydata[mydata$loc1%!in%c('com'),] #rm community associated
 mydata <- mydata[!is.na(mydata$dateofonset_foranalysis),]
 
-calculate_number_imports(data = mydata)
+calculate_number_imports(data = mydata) 
 
 #################################
 #load dna data in DNAbin format, 
