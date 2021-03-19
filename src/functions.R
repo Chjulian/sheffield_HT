@@ -1179,6 +1179,6 @@ assign_imports <- function(n_chains, p_import_mu, p_import_sd, res, ll, config) 
 ## run outbreaker with a given config and save as run_i
 run_and_save <- function(config, i, data, priors, likelihoods, prefix) {
   res <- outbreaker2:::outbreaker(data, config, priors = priors, likelihoods = likelihoods)
-  export(res, here(glue("output/run_{prefix}_{i}.rds")))
-  return(myRDS)}
+  export(res, here(glue("output/{prefix}_run_{i}.rds")))
+  return(res)}
 
