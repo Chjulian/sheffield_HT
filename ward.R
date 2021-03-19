@@ -18,6 +18,7 @@ pacman::p_load(ape, linelist, epitrix, fitdistrplus,
 source("src/functions_wards.R")
 source("src/functions.R")
 source("src/onset_distribution.R")
+source("src/calculate_number_imports.R")
 
 max_dist <- 2
 
@@ -32,6 +33,8 @@ mydata<- clean_data(mydata, guess_dates = which(names(mydata)=='DateOfOnset_forA
 mydata <- mydata[mydata$category%in%c('inpatient', 'outpatient','staff'),]
 mydata <- mydata[mydata$loc1%!in%c('com'),] #rm community associated
 mydata <- mydata[!is.na(mydata$dateofonset_foranalysis),]
+
+calculate_number_imports(data = mydata) 
 
 #################################
 #load dna data in DNAbin format, 
