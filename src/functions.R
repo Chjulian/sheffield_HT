@@ -1181,6 +1181,6 @@ run_and_save <- function(config, i, data, priors, likelihoods, mydata, wards, pr
   res <- outbreaker2:::outbreaker(data, config, priors = priors, likelihoods = likelihoods)
   myRDS <- list('raw'=mydata, 'wards'=wards,
               'data'=data, 'config'=config , 'res'=res)
-  export(myRDS, here(glue("outputs/run_{prefix}_{i}.rds")))
+  export(myRDS, here(glue("output/run_{prefix}_{i}.rds")))
   return(myRDS)}
 
