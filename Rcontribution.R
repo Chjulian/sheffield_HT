@@ -1,13 +1,21 @@
+
+
 # estimating R0 and contribution of different routes of transmission for HCW and inpatients
+
 # input parameters:
-  # reporting: distribution samples of average reporting fractions (length n)
-  # patient2patient / patient2staff / staff2staff / staff2patient: distribution samples MEAN number of secondary cases of each type
+# reporting: distribution samples of average reporting fractions (length n)
+# patient2patient / patient2staff / staff2staff / staff2patient: distribution samples MEAN number of secondary cases of each type
 
 # output:
-  # dataframe of size n x 4 giving overall R0 then R0 without pat2pat, staff2staff or staff-patient transmission
+# dataframe of size n x 4 giving overall R0 then R0 without pat2pat, staff2staff or staff-patient transmission
+
+
 Rcontribution  <- function(reporting = NULL, 
                           patient2patient = NULL, patient2staff = NULL, 
-                          staff2staff = NULL, staff2patient = NULL){
+                          staff2patient = NULL, staff2staff = NULL){
+  
+
+ 
   len <- length(reporting)
   
   # calculate overall R0
@@ -53,10 +61,10 @@ Rcontribution  <- function(reporting = NULL,
       .f = calculate_repro_number))
 
   
-  repro.out <- as.data.frame(cbind(R0=R0, 
-                                   R0_nop2p=R0_nop2p, 
-                                   R0_nos2s=R0_nos2s, 
-                                   R0_nos2p=R0_nos2p))
+  repro.out <- dplyr::as_tibble(cbind("R0"=R0, 
+                                   "R0 No patient-patient"=R0_nop2p, 
+                                   "R0 No patient-staff"=R0_nos2s, 
+                                   "R0 No staff-staff"=R0_nos2p))
   
   
   return(repro.out)
