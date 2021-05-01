@@ -223,6 +223,8 @@ config <- get_initial_tree(
 
 ## run outbreaker once for likelihood calculations
 pre_run <- outbreaker(data, config, priors = priors, likelihoods = likelihoods)
+                      
+saveRDS(pre_run, paste0("output/", output.name, "_prerun.rds"))
 
 ## make empty param
 param <- create_param(data)$current
