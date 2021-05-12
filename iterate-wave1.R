@@ -27,6 +27,7 @@ output.name <- paste0(output.name, "_",
 # load data, clean dates and filter-out observations
 mydata <- read.csv("data/hoci-phylo-metadata-onset-2021-02-07.csv",
                    stringsAsFactors =F)
+mydata$HealthcareAssociation <- recode(mydata$HealthcareAssociation, "Hospital Onset-Indetermite Healthcare Associated" = "Hospital Onset-Indeterminate Healthcare Associated")
 mydata$DateOfCollection <- as.Date(mydata$DateOfCollection, format="%d/%m/%y")
 mydata$DateOfOnset <- as.Date(mydata$DateOfOnset, format="%d/%m/%y")
 mydata$DateOfAdmission <- as.Date(mydata$DateOfAdmission, format="%d/%m/%y")
