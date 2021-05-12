@@ -1126,7 +1126,7 @@ get_average_likelihood <- function(res, data, param, config, likelihoods, burnin
 ## assign imports according the import probability and the case
 ## likelihoods. n_chains specifies how many different outbreaker chains you want
 ## to run with different imports draws.
-assign_imports <- function(n_chains, p_import_mu, p_import_sd, res, ll, config) {
+assign_imports <- function(n_chains, p_import_mu, p_import_sd, res, ll, config, max_ll = 1e20) {
 
   ## these are fixed as imports from the previous run
   prop_fixed <- mean(is.na(config$init_tree))
@@ -1152,7 +1152,10 @@ assign_imports <- function(n_chains, p_import_mu, p_import_sd, res, ll, config) 
   unfixed <- !is.na(config$init_tree)
 
   ## the sample function breaks if the values are too large, hence this fix
-  unfixed_ll <- exp(-ll[unfixed]) %>% modify_if(~ .x > 1e50, ~ 1e50)
+  unfixed_ll <- exp(-ll[unfixed]) %>% modify_if(~ .x > max_ll, ~ max_ll)
+
+  ## ## check that it samples the first 10 ()
+  ## sample(1:20, 10, FALSE, sort(unfixed_ll, TRUE)[1:20])
 
   ## draw import indices from unfixed (with 1/ll as the probability of being an import)
   imports <- map(n_import, ~ sample(which(unfixed), .x, FALSE, unfixed_ll))
@@ -1173,13 +1176,6 @@ assign_imports <- function(n_chains, p_import_mu, p_import_sd, res, ll, config) 
   ## assign these indices as imports and return
   map(imports, ~ modify_in(config, "init_tree", modify_at, .x, ~ NA))
 
-}
-
-## run outbreaker with a given config and save as run_i
-run_and_save <- function(config, i, data, priors, likelihoods) {
-  res <- outbreaker(data, config, priors = priors, likelihoods = likelihoods)
-  export(res, here(glue("outputs/run_{i}.rds")))
-  return(res)
 }
 
 
