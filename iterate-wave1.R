@@ -200,7 +200,7 @@ config <- create_config(
   ## tau is the probability of an unobserved cases being moved to a different ward
   move_tau = TRUE, prior_tau = c(1, 1),
   ## set initial mu values
-  move_mu = TRUE, init_mu = 0.1,
+  move_mu = TRUE,
   ## leave these options as is for now
   move_joint = TRUE, move_model = TRUE, move_kappa = FALSE,
   ## increase sd of proposal for infection times
