@@ -111,14 +111,10 @@ wards_scaled <- wards_scaled %>% rename(adm =  start, dis = end)
 #################################
 #set incubation_period: a vector indexed at day = 1
 #################################
-n <- rlnorm(10000, meanlog = 1.621, sdlog = 0.418)
-fit.gamma <- fitdist(n, distr = "gamma", method = "mle")
-# build discretized gamma
 incubation_period <- distcrete::distcrete("gamma",
-                                          shape = fit.gamma$estimate['shape'],
-                                          scale = fit.gamma$estimate['rate'],
+                                          shape = 5.89,
+                                          scale = 1.068555,
                                           w = 0.5, interval = 1)
-rm(n,fit.gamma)
 
 #################################
 #set generation_time: a vector indexed at day = 1
