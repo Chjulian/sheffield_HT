@@ -126,13 +126,13 @@ generation_time <- distcrete::distcrete("gamma",
                                         w = 0.5, interval = 1)
 #We can specify multiple incubation periods but we using only one
 f <- matrix(
-  c(incubation_period$d(1:50), incubation_period$d(1:50)), ncol = 2,
+  c(incubation_period$d(1:20), incubation_period$d(1:20)), ncol = 2,
   dimnames = list(NULL, c("local", "import"))
 )
 
 
 ## scale the incubation period and generation time
-w_dens_scaled <- scale_distribution(generation_time$d(1:50), scale = scale)
+w_dens_scaled <- scale_distribution(generation_time$d(1:20), scale = scale)
 f_dens_scaled <- apply(f, 2, scale_distribution, scale = scale)
 
 
