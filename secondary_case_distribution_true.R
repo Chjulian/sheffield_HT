@@ -52,8 +52,8 @@ for (wave in c(1,2)){
   dataset <- wavedata[[wave]]
   
       # loop through each iteration of the posterior distribution
-  for (iteration in 1:5){    
-  # for (iteration in 1:dim(dataset)[2]){
+  #for (iteration in 1:5){    
+  for (iteration in 1:dim(dataset)[2]){
         
               # set wave data  
               prob_observed <- dataset[iteration,-1] / sum(dataset[iteration,-1], na.rm = TRUE)

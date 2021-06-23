@@ -67,7 +67,7 @@ p <- ggplot2::ggplot() +
        # title = "When is transmission to patients more likely than transmission to staff?") +
   ylim(0,maxratio) + 
   theme_minimal() + 
-  theme(axis.text.x = element_text(angle = 40, hjust=1)) +
+  theme(axis.text.x = element_text(angle = 60, hjust=1)) +
   scale_fill_identity(name = "Individual patient infection risk",
                       labels = c("Lower than for a staff member", "Higher than for a staff member"),
                       guide = "legend") 
