@@ -53,8 +53,7 @@ for (wave in c(1,2)){
   
       # loop through each iteration of the posterior distribution
   #for (iteration in 1:5){    
-  for (iteration in 1:dim(dataset)[2]){
-        
+  for (iteration in 1:dim(dataset)[1]){
               # set wave data  
               prob_observed <- dataset[iteration,-1] / sum(dataset[iteration,-1], na.rm = TRUE)
               prob_observed[is.na(prob_observed)] <- 0
