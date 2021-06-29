@@ -5,7 +5,7 @@
 
 
 
-secondary_case_distribution <- function(wave_number, number_networks = 100, parallel = TRUE){
+secondary_case_distribution <- function(wave_number, parallel = TRUE){
     
     # timer
     tictoc::tic() 
@@ -17,7 +17,7 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
   }
     
     # read in data files
-    
+    number_networks <- 100
     wavedata = list()
     if (wave_number == 1){
       wavedata <- readRDS("wave1-sec-outcomes.RDS")
@@ -60,9 +60,6 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
         # number of samples to draw from empirical distributions
         num_samples <- 5000
         
-        # reporting rate of patients / staff
-        reporting_rate <- 0.5
-        
         # vector of secondary cases
         secondary_cases <- seq(0,length(dataset[[1]])-2,1)
         
@@ -78,8 +75,6 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
          
          prob_observed <- data[-1] / sum(data[-1], na.rm = TRUE)
          prob_observed[is.na(prob_observed)] <- 0
-         
-         
                   
                   # if(sum(prob_observed)!=1){
                   #   warning("prob_observed doesn't add to one")
@@ -149,12 +144,12 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
                                   # 
                   
                   # 2. ####### using optimisation
-                  calculate_sqsum <- function(params, sample_observed, secondary_cases, num_samples, reporting_rate){
+                  calculate_sqsum <- function(params, sample_observed, secondary_cases, num_samples){
                     
                     p0 <- params[1]
                     p1 <- params[2]
                     
-                    
+                    reporting_rate <- 0.5
                     
                     
                     
@@ -165,7 +160,7 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
                         (p0*(1-reporting_rate) + p1*(1-reporting_rate)^2)^i
                       }
                       
-                      prob1up <- prob_unobserved(p0, p1, secondary_cases[-1], reporting_rate)
+                      prob1up <- prob_unobserved(p0, p1, secondary_cases[-1])
                       probs <- c(1-sum(prob1up), prob1up)
                       su <- sample_function(x = secondary_cases, n = num_samples, p = probs)
                     }   
@@ -188,8 +183,7 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
                   param_out <- optim(c(0.6, 0.2), calculate_sqsum, 
                           sample_observed = sample_observed, 
                           secondary_cases = secondary_cases, 
-                          num_samples = num_samples,
-                          reporting_rate = reporting_rate)$par
+                          num_samples = num_samples)$par
                   
                   
                   # calculate the best fit distribution
@@ -201,14 +195,14 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
                     }
                     
                     
-                    prob1up <- prob_unobserved(p0, p1, secondary_cases[-1], reporting_rate)
+                    prob1up <- prob_unobserved(p0, p1, secondary_cases[-1])
                     probs <- c(1-sum(prob1up), prob1up)
                     su <- sample_function(x = secondary_cases, n = num_samples, p = probs)
-                  }   
+                    }   
                   
                   sample_true <- sample_observed + sample_unobserved(param_out[1], param_out[2], secondary_cases, num_samples, reporting_rate)
                 
-                  breaks <- c(0,seq(0.9, 9.9, 1), 20)
+                  breaks <- c(0,seq(0.9,floor(max(unlist(sample_true))), 1), ceiling(max(unlist(sample_true))))
                   
                   best_fit_distribution <- hist(sample_true, breaks = breaks, plot = FALSE)$density 
                   
