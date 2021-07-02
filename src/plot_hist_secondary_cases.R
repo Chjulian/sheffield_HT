@@ -4,8 +4,6 @@ rm(list=ls())
 # data_type can be adjusted (adjusting for unobserved cases) or raw (only observed)
 plot_hist_secondary_cases <- function(data_type = "adjusted"){
 
-
-  
 # read in data file for adjusted secondary cases
 d = 10000
 sec_case_vector <- seq(0,10,1)
@@ -13,12 +11,12 @@ wavedata = list()
 if (data_type == "adjusted"){
   
         print("reading in adjusted secondary cases")
-        wavedata[[1]] <- readRDS("wave1-adjustedsec-outcomes.RDS")
-        wavedata[[2]] <- readRDS("wave2-adjustedsec-outcomes.RDS")
+        wavedata[[1]] <- readRDS("./output/wave1-adjustedsec-outcomes.RDS")
+        wavedata[[2]] <- readRDS("./output/wave2-adjustedsec-outcomes.RDS")
 }else if(data_type == "raw"){
          print("reading in unadjusted secondary cases")
-        wavedata[[1]] <- readRDS("wave1-sec-outcomes.RDS")
-        wavedata[[2]] <- readRDS("wave2-sec-outcomes.RDS")
+        wavedata[[1]] <- readRDS("./output/wave1-sec-outcomes.RDS")
+        wavedata[[2]] <- readRDS("./output/wave2-sec-outcomes.RDS")
         
         wavedata[[1]] <- wavedata[[1]][-1] / rowSums(wavedata[[1]][-1], na.rm = TRUE)
         wavedata[[1]][is.na(wavedata[[1]])] <- 0
@@ -130,7 +128,7 @@ p <- ggplot(data = all_plot) +
 
 # save output
 ggsave(
-  paste("adjusted_secondary_cases", "_", todaysdate, ".pdf", sep=""),
+  paste("./plots/adjusted_secondary_cases", "_", todaysdate, ".pdf", sep=""),
   plot = p,
   width = 11,
   height = 8.5,

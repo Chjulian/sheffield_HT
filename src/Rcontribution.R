@@ -1,5 +1,3 @@
-
-
 # estimating R0 and contribution of different routes of transmission for HCW and inpatients
 
 # input parameters:

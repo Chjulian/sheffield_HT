@@ -20,8 +20,8 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
     
     wavedata = list()
     if (wave_number == 1){
-      wavedata <- readRDS("wave1-sec-outcomes.RDS")
-    }else{wavedata <- readRDS("wave2-sec-outcomes.RDS")}
+      wavedata <- readRDS("./output/wave1-sec-outcomes.RDS")
+    }else{wavedata <- readRDS("./output/wave2-sec-outcomes.RDS")}
     
     cnames <- c("n.0", "n.1", "n.2", "n.3", "n.4", "n.5", "n.6", "n.7", "n.8", "n.9", "n.10")
     
@@ -269,10 +269,10 @@ secondary_case_distribution <- function(wave_number, number_networks = 100, para
       
       if(wave_number==1){
         print("saving wave 1")
-        saveRDS(wave_adjustedsec_outcomes, "wave1-adjustedsec-outcomes.rds")
+        saveRDS(wave_adjustedsec_outcomes, "./output/wave1-adjustedsec-outcomes.rds")
       }else{
         print("saving wave 2")
-        saveRDS(wave_adjustedsec_outcomes, "wave2-adjustedsec-outcomes.rds")
+        saveRDS(wave_adjustedsec_outcomes, "./output/wave2-adjustedsec-outcomes.rds")
       }
       
     # }

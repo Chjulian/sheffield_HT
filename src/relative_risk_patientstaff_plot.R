@@ -1,6 +1,6 @@
 
-wave1 <- readRDS("wave1-outcomes.rds")
-wave2 <- readRDS("wave2-outcomes.rds")
+wave1 <- readRDS("./output/wave1-outcomes.rds")
+wave2 <- readRDS("./output/wave2-outcomes.rds")
 
 n <- 10
 s = 2

@@ -3,6 +3,6 @@
 .RData
 .Ruserdata
 data/
-output/
 R.sh
-server.R
+src/utilities.R
+src/vis.R
