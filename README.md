@@ -32,7 +32,7 @@ Out (chr) date when the person was discharged from the ward, YYYY-MM-DD HH:MM:SS
 ```
 The model requires some extra arguments: 
 ```
-scale (int, default=6): scale the occupation data in hours
+scale (int, default=6): scale the ward occupation data into fractions of the day. E.g. '6' splits into time blocks of 4 hours
 reporting.probability (probability, default=0.5): the reporting probability
 number.import.chains (int, default=5): number of import randomizations
 incubation_period: a discrete distribution of the incubation period, can be specified via distcrete::distcrete
