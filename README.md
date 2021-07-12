@@ -20,7 +20,8 @@ Loc1...8 (chr) identifier(s) of the ward(s) occupied by the patient or visited b
 DateOfOnset (chr) date of onset of symptoms, DD/MM/YY
 ```
 
-The sequence data `.aln` should contain one sequence per person in FASTA format.
+The sequence data `.aln` should contain one sequence per person in FASTA format. 
+The inputted alignment file had problematic sites removed using the bash script in `masking/masking`. 
 
 The `.csv` files with the ward occupation data contains the following fields:
 ```
