@@ -7,22 +7,17 @@ This repository contains the code for the analysis of the model presented in the
 The dataset should be located in `data/[mydata].csv` and contains the following fields:
 ```
 Barcode (chr) unique identifier per person
-SpecNo (chr) unique identifier per sample
 Sex (chr) either Male (M) or Female (F)
 Age (int) age at diagnosis
 DateOfCollection (chr) date of sample collection, DD/MM/YY
 DayOfSymptoms (int) Date of onset of symptoms, DD/MM/YY
-Deceased (log) If deceased, TRUE/FALSE
 Lineage (chr) SARS-COV-2 pango-lineage
-UKlineage (chr) SARS-COV-2 UK lineage identified via [CIVET](https://cog-uk.github.io/civet/interpretation.html)
-Phylotype (chr) SARS-COV-2 phylotype identified via [CIVET](https://cog-uk.github.io/civet/interpretation.html)
 Category (chr) either STAFF or INPATIENT 
 DateOfAdmission (chr) date when the person was admitted to the hospital
 HealthcareAssociation (chr) any of the 5 categories (Community Onset-Community Associated, Community Onset-Suspected Healthcare Associated, Hospital Onset-Healthcare Associated, Hospital Onset-Indetermite Healthcare Associated, Hospital Onset-Suspected Healthcare Associated) defined in file S1056 from SAGE (Contribution of nosocomial infections to the first wave) or STAFF
 SwabLocation (chr) identifier of the ward where the sample was collected
 Loc1...8 (chr) identifier(s) of the ward(s) occupied by the patient or visited by staff
 DateOfOnset (chr) date of onset of symptoms, DD/MM/YY
-Asymptomatic (log) If asymptomatic, TRUE/FALSE
 ```
 
 The sequence data `.aln` should contain one sequence per person in FASTA format.
