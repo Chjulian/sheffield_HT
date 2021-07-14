@@ -38,9 +38,9 @@ number.import.chains (int, default=5): number of import randomizations
 incubation_period: a discrete distribution of the incubation period, can be specified via distcrete::distcrete
 generation_time: a discrete distribution of the generation time, can be specified via distcrete::distcrete
 ```
-The information is pass to outbreaker via [`create_config`](https://cran.r-project.org/web/packages/outbreaker2/outbreaker2.pdf).
+The information is passed to outbreaker via [`create_config`](https://cran.r-project.org/web/packages/outbreaker2/outbreaker2.pdf).
 
 ### Running the model
 ---
 
-The `iterate-wave(n).R` script is run 100 separate times with the output files saved to `./output`. After these have finished running the `combine_iterations.R` script is called which combined the output files from each run.
+The `iterate-wave(n).R` script is run 100 separate times with the output files saved to `./output`. After these have finished the `combine_iterations.R` script is used to combined the output files into one.
