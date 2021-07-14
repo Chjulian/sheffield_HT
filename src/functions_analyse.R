@@ -1,3 +1,4 @@
+#convert indexed and scale data back to original metadata and unscaled dates
 add_meta <-
         function(run,
                  mydata,
@@ -37,33 +38,7 @@ add_meta <-
                 return(run)
         }
 
-check_pairs <- function(run) {
-        fun.df <- run
-        fun.df$ward_snp <-
-                paste0(fun.df$same_ward, "-SNP", fun.df$dist)
-        sum.table <- prop.table(table(fun.df$ward_snp))
-        out.tib <- tibble(
-                "SameWard-0SNP" = round(sum.table["TRUE-SNP0"], 2),
-                "SameWard-1SNP" = round(sum.table["TRUE-SNP1"], 2),
-                "SameWard-2SNP" = round(sum.table["TRUE-SNP2"], 2),
-                "SameWard-3SNP" = round(sum.table["TRUE-SNP3"], 2),
-                "DifferentWard-0SNP" = round(sum.table["FALSE-SNP0"], 2),
-                "DifferentWard-1SNP" = round(sum.table["FALSE-SNP1"], 2),
-                "Other" = round(
-                        1 - (
-                                sum.table["TRUE-SNP0"] +
-                                        sum.table["TRUE-SNP1"] +
-                                        sum.table["TRUE-SNP2"] +
-                                        sum.table["TRUE-SNP3"] +
-                                        sum.table["FALSE-SNP0"] +
-                                        sum.table["FALSE-SNP1"]
-                        ),
-                        2
-                )
-        )
-        return(out.tib)
-}
-
+#generate outcomes of interest from outbreaker run output
 analyse_run <- function(run, mydata, baylink.pairs, wave) {
         network.all <- run[!is.na(run$from), ]
         network.all$unsampled.case <-
