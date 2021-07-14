@@ -40,5 +40,7 @@ generation_time: a discrete distribution of the generation time, can be specifie
 ```
 The information is pass to outbreaker via [`create_config`](https://cran.r-project.org/web/packages/outbreaker2/outbreaker2.pdf).
 
+### Running the model
+---
 
-
+The `iterate-wave(n).R` script is run 100 separate times with the output files saved to `./output`. After these have finished running the `combine_iterations.R` script is called which combined the output files from each run.
